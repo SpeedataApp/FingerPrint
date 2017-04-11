@@ -7,12 +7,14 @@ import android.os.Handler;
 import android.os.Message;
 import android.serialport.DeviceControl;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.IDWORLD.LAPI;
 import com.digitalpersona.uareu.Fmd;
 import com.mylibrary.FingerManger;
 import com.mylibrary.inf.IFingerPrint;
@@ -23,6 +25,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     TextView tvMsg;
     private IFingerPrint iFingerPrint;
     DeviceControl deviceControl;
+    private String sss = "";
+    private String ssss = "";
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -35,7 +40,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 //            e.printStackTrace();
 //        }
         if (iFingerPrint == null) {
-            Toast.makeText(MainActivity.this, "template1", Toast.LENGTH_SHORT).show();
+            Toast.makeText(MainActivity.this, "请链接指纹模板", Toast.LENGTH_SHORT).show();
             finish();
         }
 //        try {
@@ -76,11 +81,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         fingerImage.setImageBitmap(bmp);
     }
 
-    private byte[] template1 = null;
-    private byte[] template2 = null;
+    private byte[] template1 ;
+    private byte[] template2 ;
     boolean template = true;
     String TAG = "finger";
-
+    int flg = 0;
     private Handler handler = new Handler() {
         @Override
         public void handleMessage(Message msg) {
@@ -96,23 +101,27 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     tvMsg.setText(String.format("CompareTemplates() = %d", (Integer) msg.obj));
                     break;
                 case 3://获取模板特征   黑色指纹
-                    if (template) {
-                        template = false;
+                    if (flg == 0) {
+//                        template = false;
+                        flg = 1;
                         template1 = new byte[1024];
                         template1 = (byte[]) msg.obj;
-//                        for (int i = 0; i < LAPI.FPINFO_STD_MAX_SIZE; i++) {
-//                            String sss = String.format("%02x", template1[i]);
-//                        }
+                        for (int i = 0; i < LAPI.FPINFO_STD_MAX_SIZE; i++) {
+                            sss += String.format("%02x", template1[i]);
+                        }
+                        Log.i(TAG, "handleMessage: " + flg + "\n" + sss);
                         Toast.makeText(MainActivity.this, "template1", Toast.LENGTH_SHORT).show();
 
 
                     } else {
-                        template = true;
+//                        template = true;
+                        flg = 0;
                         template2 = new byte[1024];
                         template2 = (byte[]) msg.obj;
-//                        for (int i = 0; i < LAPI.FPINFO_STD_MAX_SIZE; i++) {
-//                            Log.i(TAG, String.format("%02x", template2[i]));
-//                        }
+                        for (int i = 0; i < LAPI.FPINFO_STD_MAX_SIZE; i++) {
+                            ssss += String.format("%02x", template2[i]);
+                        }
+                        Log.i(TAG, "handleMessage: " + flg + "\n" + ssss);
                         Toast.makeText(MainActivity.this, "template2", Toast.LENGTH_SHORT).show();
                     }
                     break;
@@ -143,6 +152,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     tvMsg.setText((String) msg.obj);
                     break;
                 case 10:
+//                    fingerImage.setImageBitmap(null);
                     fingerImage.setImageBitmap((Bitmap) msg.obj);
                     break;
                 case 11:
@@ -175,6 +185,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     }
 
+    String s1 = "";
+    String s2 = "";
+
     @Override
     public void onClick(View view) {
         if (view == btnOpen) {
@@ -198,6 +211,14 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             iFingerPrint.createTemplate();
 
         } else if (view == btnCompare) {
+//            for (int i = 0; i < template1.length; i++) {
+//                s1 += String.format("%02x", template1[i]);
+//            }
+//            for (int i = 0; i < template2.length; i++) {
+//                s2 += String.format("%02x", template2[i]);
+//            }
+//            Log.i(TAG, "MessageS1: " + "\n" + s1);
+//            Log.i(TAG, "MessageS2: " + "\n" + s2);
             iFingerPrint.comparisonFinger(template1, template2);
             iFingerPrint.comparisonFinger(fmd1, fmd2);
         }

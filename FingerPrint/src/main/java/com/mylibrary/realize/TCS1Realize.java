@@ -99,7 +99,6 @@ public class TCS1Realize implements IFingerPrint {
         // 运行该服务执行此函数
         public void run() {
             int nRet = 0;
-            while (reset){
                 nRet = a6.ZAZGetImage(DEV_ADDR);
                 if (nRet==0){
                     int[] len = {0, 0};
@@ -111,16 +110,15 @@ public class TCS1Realize implements IFingerPrint {
                     bmpDefaultPic = BitmapFactory.decodeFile(str, null);
                     handler.sendMessage(handler.obtainMessage(10, bmpDefaultPic));
                 }else if (nRet == a6.PS_NO_FINGER) {
-                    continue;
+                    return;
                 } else if (nRet == a6.PS_GET_IMG_ERR) {
-                    continue;
+                    return;
                 } else if (nRet == -2) {
-                    continue;
+                    return;
                 } else {
-                    continue;
+                    return;
                 }
             }
-        }
     };
 
     private void removeCallbacks() {

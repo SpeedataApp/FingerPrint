@@ -3,6 +3,7 @@ package com.mylibrary.realize;
 import android.app.Activity;
 import android.content.Context;
 import android.os.Handler;
+import android.util.Log;
 
 import com.IDWORLD.LAPI;
 import com.digitalpersona.uareu.Fmd;
@@ -19,7 +20,7 @@ public class TCS1BRealize implements IFingerPrint {
     private int m_hDevice;
     private LAPI mLapi;
     private byte[] m_image = new byte[LAPI.WIDTH * LAPI.HEIGHT];
-    private byte[] mItemplate = new byte[LAPI.FPINFO_STD_MAX_SIZE];
+    private byte[] mItemplate;
     private int qualitys;
 
     public TCS1BRealize(Context context, Activity activity, Handler handler) {
@@ -81,10 +82,15 @@ public class TCS1BRealize implements IFingerPrint {
         if (qualitys > 50) {
             ret = mLapi.IsPressFinger(m_hDevice, m_image);//判断手指是否在指纹模板上、返回值0-100
             if (ret != 0) {
+                mItemplate = new byte[LAPI.FPINFO_STD_MAX_SIZE];
                 ret = mLapi.CreateTemplate(m_hDevice, m_image, mItemplate);
                 if (ret == 0) {
                     msg = "Can't create template !";
                 } else {
+                    for (int i = 0; i < LAPI.FPINFO_STD_MAX_SIZE; i++) {
+                        msg += String.format("%02x", mItemplate[i]);
+                    }
+                    Log.e("finger", "senMessage: "  + msg);
                     handler.sendMessage(handler.obtainMessage(3, mItemplate));
                 }
             }
