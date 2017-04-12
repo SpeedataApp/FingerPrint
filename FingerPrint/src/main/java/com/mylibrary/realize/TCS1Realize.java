@@ -55,37 +55,37 @@ public class TCS1Realize implements IFingerPrint {
 
     @Override
     public void getImage() {
-        onBackPressed();
-//        removeCallbacks();
-//        handler.postDelayed(getImageTask, 0);
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                int nRet = 0;
-                reset=true;
-                while (reset){
-                    nRet = a6.ZAZGetImage(DEV_ADDR);
-                    if (nRet==0){
-                        int[] len = {0, 0};
-                        byte[] Image = new byte[256 * 360];
-                        a6.ZAZUpImage(DEV_ADDR, Image, len);//上传图像
-                        String str = "/mnt/sdcard/test.bmp";
-                        a6.ZAZImgData2BMP(Image, str);//图像数据保存
-                        Bitmap bmpDefaultPic;
-                        bmpDefaultPic = BitmapFactory.decodeFile(str, null);
-                        handler.sendMessage(handler.obtainMessage(10, bmpDefaultPic));
-                    }else if (nRet == a6.PS_NO_FINGER) {
-                        continue;
-                    } else if (nRet == a6.PS_GET_IMG_ERR) {
-                        continue;
-                    } else if (nRet == -2) {
-                        continue;
-                    } else {
-                        continue;
-                    }
-                }
-            }
-        }).start();
+//        onBackPressed();
+        removeCallbacks();
+        handler.postDelayed(fpTasks, 0);
+//        new Thread(new Runnable() {
+//            @Override
+//            public void run() {
+//                int nRet = 0;
+//                reset=true;
+//                while (reset){
+//                    nRet = a6.ZAZGetImage(DEV_ADDR);
+//                    if (nRet==0){
+//                        int[] len = {0, 0};
+//                        byte[] Image = new byte[256 * 360];
+//                        a6.ZAZUpImage(DEV_ADDR, Image, len);//上传图像
+//                        String str = "/mnt/sdcard/test.bmp";
+//                        a6.ZAZImgData2BMP(Image, str);//图像数据保存
+//                        Bitmap bmpDefaultPic;
+//                        bmpDefaultPic = BitmapFactory.decodeFile(str, null);
+//                        handler.sendMessage(handler.obtainMessage(10, bmpDefaultPic));
+//                    }else if (nRet == a6.PS_NO_FINGER) {
+//                        continue;
+//                    } else if (nRet == a6.PS_GET_IMG_ERR) {
+//                        continue;
+//                    } else if (nRet == -2) {
+//                        continue;
+//                    } else {
+//                        continue;
+//                    }
+//                }
+//            }
+//        }).start();
     }
     private boolean reset=true;
     public void onBackPressed() {
@@ -114,6 +114,7 @@ public class TCS1Realize implements IFingerPrint {
                 } else if (nRet == a6.PS_GET_IMG_ERR) {
                     return;
                 } else if (nRet == -2) {
+
                     return;
                 } else {
                     return;
@@ -123,9 +124,34 @@ public class TCS1Realize implements IFingerPrint {
 
     private void removeCallbacks() {
         handler.removeCallbacks(Characteristic);
-        handler.removeCallbacks(getImageTask);
+        handler.removeCallbacks(fpTasks);
     }
+    private Runnable fpTasks = new Runnable() {
+        public void run()// 运行该服务执行此函数
+        {
+            int nRet = 0;
+            nRet = a6.ZAZGetImage(DEV_ADDR);
+            if (nRet == 0) {
+                int[] len = {0, 0};
+                byte[] Image = new byte[256 * 360];
+                a6.ZAZUpImage(DEV_ADDR, Image, len);
+                String str = "/mnt/sdcard/test.bmp";
+                a6.ZAZImgData2BMP(Image, str);
+                Bitmap bmpDefaultPic;
+                bmpDefaultPic = BitmapFactory.decodeFile(str, null);
+                handler.sendMessage(handler.obtainMessage(10, bmpDefaultPic));
+            } else if (nRet == a6.PS_NO_FINGER) {
+                handler.postDelayed(fpTasks, 100);
+            } else if (nRet == a6.PS_GET_IMG_ERR) {
+                handler.postDelayed(fpTasks, 100);
+                return;
+            } else if (nRet == -2) {
+            } else {
+                return;
+            }
 
+        }
+    };
     @Override
     public void createTemplate() {
 //        removeCallbacks();

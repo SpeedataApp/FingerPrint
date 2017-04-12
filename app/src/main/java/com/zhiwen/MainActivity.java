@@ -1,6 +1,7 @@
 package com.zhiwen;
 
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.os.Handler;
@@ -18,6 +19,7 @@ import com.IDWORLD.LAPI;
 import com.digitalpersona.uareu.Fmd;
 import com.mylibrary.FingerManger;
 import com.mylibrary.inf.IFingerPrint;
+import com.za.finger.ZAandroid;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
     Button btnOpen, btnGetImage, btnGetQuality, btnColse, btnCompare, btnCreateTemplate;
@@ -27,7 +29,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     DeviceControl deviceControl;
     private String sss = "";
     private String ssss = "";
-
+    ZAandroid a6 = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -63,6 +65,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         btnCompare.setOnClickListener(this);
         btnColse = (Button) findViewById(R.id.btn_colse);
         btnColse.setOnClickListener(this);
+       a6=new ZAandroid();
     }
 
     private void ShowFingerBitmap(byte[] image, int width, int height) {
@@ -204,7 +207,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 tvMsg.setText("Colse reader fail");
             }
         } else if (view == btnGetImage) {
-            iFingerPrint.getImage();
+//            iFingerPrint.getImage();
+            handler.removeCallbacks(fpTasks);
+            handler.postDelayed(fpTasks, 0);
         } else if (view == btnGetQuality) {
             iFingerPrint.getImageQuality();
         } else if (view == btnCreateTemplate) {
@@ -223,4 +228,32 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             iFingerPrint.comparisonFinger(fmd1, fmd2);
         }
     }
+    private static int DEV_ADDR = 0xffffffff;
+    private static int IMG_SIZE = 0;//同参数：（0:256x288 1:256x360）
+    private Runnable fpTasks = new Runnable() {
+        public void run()// 运行该服务执行此函数
+        {
+            int nRet = 0;
+            nRet = a6.ZAZGetImage(DEV_ADDR);
+            if (nRet == 0) {
+                int[] len = {0, 0};
+                byte[] Image = new byte[256 * 360];
+                a6.ZAZUpImage(DEV_ADDR, Image, len);
+                String str = "/mnt/sdcard/test.bmp";
+                a6.ZAZImgData2BMP(Image, str);
+                Bitmap bmpDefaultPic;
+                bmpDefaultPic = BitmapFactory.decodeFile(str, null);
+                fingerImage.setImageBitmap(bmpDefaultPic);
+            } else if (nRet == a6.PS_NO_FINGER) {
+                handler.postDelayed(fpTasks, 100);
+            } else if (nRet == a6.PS_GET_IMG_ERR) {
+                handler.postDelayed(fpTasks, 100);
+                return;
+            } else if (nRet == -2) {
+            } else {
+                return;
+            }
+
+        }
+    };
 }
