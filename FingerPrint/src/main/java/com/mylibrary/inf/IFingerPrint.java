@@ -49,7 +49,8 @@ public interface IFingerPrint {
 
     public void getImageQuality();
 
-    public void clearFinger();
+    public boolean clearFinger();
+    public void unObject();
 
 
 }

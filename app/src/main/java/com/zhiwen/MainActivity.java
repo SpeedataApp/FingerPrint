@@ -1,7 +1,12 @@
 package com.zhiwen;
 
+import android.app.Activity;
+import android.app.Dialog;
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.os.Handler;
@@ -19,38 +24,47 @@ import com.IDWORLD.LAPI;
 import com.digitalpersona.uareu.Fmd;
 import com.mylibrary.FingerManger;
 import com.mylibrary.inf.IFingerPrint;
-import com.za.finger.ZAandroid;
+
+import java.io.IOException;
+import java.text.DecimalFormat;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
     Button btnOpen, btnGetImage, btnGetQuality, btnColse, btnCompare, btnCreateTemplate;
-    ImageView fingerImage;
+    ImageView fingerImage = null;
     TextView tvMsg;
     private IFingerPrint iFingerPrint;
     DeviceControl deviceControl;
     private String sss = "";
     private String ssss = "";
-    ZAandroid a6 = null;
+    Fmd fmd1 = null;
+    Fmd fmd2 = null;
+    private byte[] template1;
+    private byte[] template2;
+    boolean template = true;
+    String TAG = "finger";
+    int flg = 0;
+    String s1 = "";
+    String s2 = "";
+    private Dialog dialog;
+
+    Context mContext;
+    Activity mActivity;
+    private long now;
+    private long start;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        iFingerPrint = FingerManger.getIFingerPrintIntance(this, MainActivity.this, handler);
-//        try {
-//            iFingerPrint.initDev(MainActivity.this, DeviceControl.PowerType.MAIN_AND_EXPAND, this, handler, 63, 6);
-//        } catch (IOException e) {
-//            e.printStackTrace();
-//        }
-        if (iFingerPrint == null) {
-            Toast.makeText(MainActivity.this, "请链接指纹模板", Toast.LENGTH_SHORT).show();
-            finish();
+        IntentFilter intentFilter = new IntentFilter();
+        intentFilter.addAction("com.hall.success");
+        registerReceiver(receiver, intentFilter);
+        try {
+            deviceControl = new DeviceControl(DeviceControl.PowerType.MAIN_AND_EXPAND, 63, 6, 5);
+            deviceControl.PowerOnDevice();
+        } catch (IOException e) {
+            e.printStackTrace();
         }
-//        try {
-//            deviceControl = new DeviceControl(DeviceControl.PowerType.MAIN_AND_EXPAND, 63, 6);
-//            deviceControl.PowerOnDevice();
-//        } catch (IOException e) {
-//            e.printStackTrace();
-//        }
         tvMsg = (TextView) findViewById(R.id.tv_msg);
         fingerImage = (ImageView) findViewById(R.id.btn_imageView);
         btnOpen = (Button) findViewById(R.id.btn_open);
@@ -65,30 +79,104 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         btnCompare.setOnClickListener(this);
         btnColse = (Button) findViewById(R.id.btn_colse);
         btnColse.setOnClickListener(this);
-       a6=new ZAandroid();
+        setBtnState(false);
     }
 
-    private void ShowFingerBitmap(byte[] image, int width, int height) {
-        if (width == 0) return;
-        if (height == 0) return;
+    int ii = 0;
 
-        int[] RGBbits = new int[width * height];
-        fingerImage.invalidate();
-        for (int i = 0; i < width * height; i++) {
-            int v;
-            if (image != null) v = image[i] & 0xff;
-            else v = 0;
-            RGBbits[i] = Color.rgb(v, v, v);
+    @Override
+    protected void onResume() {
+        super.onResume();
+        start = System.currentTimeMillis();
+        dialog = CreateDialog.showLoadingDialog(MainActivity.this, "搜索指纹模板");
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                while (iFingerPrint == null) {
+                    now = System.currentTimeMillis();
+                    iFingerPrint = FingerManger.getIFingerPrintIntance(MainActivity.this, MainActivity.this, handler);
+                    if (now - start > 4000) {
+                        CreateDialog.closeDialog(dialog);
+                        return;
+                    }
+                }
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        if (iFingerPrint == null) {
+                            Toast.makeText(MainActivity.this, "请链接指纹模板", Toast.LENGTH_SHORT).show();
+//                            finish();
+                        } else {
+                            setBtnState(true);
+                            CreateDialog.closeDialog(dialog);
+                        }
+                    }
+                });
+            }
+        }).start();
+
+    }
+
+    private BroadcastReceiver receiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            if (intent.getAction().equals("com.hall.success")) {
+                try {
+                    deviceControl.PowerOnDevice();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            } else if (intent.getAction().equals("com.geomobile.hallremove")) {
+            }
         }
-        Bitmap bmp = Bitmap.createBitmap(RGBbits, width, height, Bitmap.Config.RGB_565);
-        fingerImage.setImageBitmap(bmp);
+    };
+
+    private void setBtnState(boolean btnState) {
+
+        btnOpen.setEnabled(btnState);
+        btnGetImage.setEnabled(btnState);
+        btnGetQuality.setEnabled(btnState);
+        btnColse.setEnabled(btnState);
+        btnCompare.setEnabled(btnState);
+        btnCreateTemplate.setEnabled(btnState);
     }
 
-    private byte[] template1 ;
-    private byte[] template2 ;
-    boolean template = true;
-    String TAG = "finger";
-    int flg = 0;
+    @Override
+    public void onClick(View view) {
+        if (view == btnOpen) {
+            if (iFingerPrint.openReader()) {
+                tvMsg.setText("Open reader success");
+            } else {
+                tvMsg.setText("Open reader fail");
+            }
+        } else if (view == btnColse) {
+            if (iFingerPrint.closeReader()) {
+                tvMsg.setText("Colse reader success");
+
+            } else {
+                tvMsg.setText("Colse reader fail");
+            }
+        } else if (view == btnGetImage) {
+            iFingerPrint.getImage();
+        } else if (view == btnGetQuality) {
+            iFingerPrint.getImageQuality();
+        } else if (view == btnCreateTemplate) {
+            iFingerPrint.createTemplate();
+
+        } else if (view == btnCompare) {
+//            for (int i = 0; i < template1.length; i++) {
+//                s1 += String.format("%02x", template1[i]);
+//            }
+//            for (int i = 0; i < template2.length; i++) {
+//                s2 += String.format("%02x", template2[i]);
+//            }
+//            Log.i(TAG, "MessageS1: " + "\n" + s1);
+//            Log.i(TAG, "MessageS2: " + "\n" + s2);
+            iFingerPrint.comparisonFinger(template1, template2);
+            iFingerPrint.comparisonFinger(fmd1, fmd2);
+        }
+    }
+
     private Handler handler = new Handler() {
         @Override
         public void handleMessage(Message msg) {
@@ -146,7 +234,13 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     }
                     break;
                 case 7:
-                    tvMsg.setText((String) msg.obj);
+                    int m_score = (int) msg.obj;
+                    DecimalFormat formatting = new DecimalFormat("##.######");
+                    String conclusionString = "Dissimilarity Score: " + String.valueOf(m_score)
+                            + ", False match rate: " +
+                            Double.valueOf(formatting.format((double) m_score / 0x7FFFFFFF))
+                            + " (" + (m_score < (0x7FFFFFFF / 100000) ? "match" : "no match") + ")";
+                    tvMsg.setText(conclusionString);
                     break;
                 case 8:
                     tvMsg.setText((String) msg.obj);
@@ -167,8 +261,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             }
         }
     };
-    Fmd fmd1 = null;
-    Fmd fmd2 = null;
+
 
     private static String charToHexString(byte[] val) {
         String temp = "";
@@ -185,75 +278,31 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     @Override
     protected void onDestroy() {
         super.onDestroy();
-
+        if (iFingerPrint != null) {
+            iFingerPrint.unObject();
+        }
+        unregisterReceiver(receiver);
+//        try {
+//            deviceControl.PowerOffDevice();
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//        }
     }
 
-    String s1 = "";
-    String s2 = "";
+    private void ShowFingerBitmap(byte[] image, int width, int height) {
+        if (width == 0) return;
+        if (height == 0) return;
 
-    @Override
-    public void onClick(View view) {
-        if (view == btnOpen) {
-            if (iFingerPrint.openReader()) {
-                tvMsg.setText("Open reader success");
-            } else {
-                tvMsg.setText("Open reader fail");
-            }
-        } else if (view == btnColse) {
-            if (iFingerPrint.closeReader()) {
-                tvMsg.setText("Colse reader success");
-
-            } else {
-                tvMsg.setText("Colse reader fail");
-            }
-        } else if (view == btnGetImage) {
-//            iFingerPrint.getImage();
-            handler.removeCallbacks(fpTasks);
-            handler.postDelayed(fpTasks, 0);
-        } else if (view == btnGetQuality) {
-            iFingerPrint.getImageQuality();
-        } else if (view == btnCreateTemplate) {
-            iFingerPrint.createTemplate();
-
-        } else if (view == btnCompare) {
-//            for (int i = 0; i < template1.length; i++) {
-//                s1 += String.format("%02x", template1[i]);
-//            }
-//            for (int i = 0; i < template2.length; i++) {
-//                s2 += String.format("%02x", template2[i]);
-//            }
-//            Log.i(TAG, "MessageS1: " + "\n" + s1);
-//            Log.i(TAG, "MessageS2: " + "\n" + s2);
-            iFingerPrint.comparisonFinger(template1, template2);
-            iFingerPrint.comparisonFinger(fmd1, fmd2);
+        int[] RGBbits = new int[width * height];
+        fingerImage.invalidate();
+        for (int i = 0; i < width * height; i++) {
+            int v;
+            if (image != null) v = image[i] & 0xff;
+            else v = 0;
+            RGBbits[i] = Color.rgb(v, v, v);
         }
+        Bitmap bmp = Bitmap.createBitmap(RGBbits, width, height, Bitmap.Config.RGB_565);
+        fingerImage.setImageBitmap(bmp);
     }
-    private static int DEV_ADDR = 0xffffffff;
-    private static int IMG_SIZE = 0;//同参数：（0:256x288 1:256x360）
-    private Runnable fpTasks = new Runnable() {
-        public void run()// 运行该服务执行此函数
-        {
-            int nRet = 0;
-            nRet = a6.ZAZGetImage(DEV_ADDR);
-            if (nRet == 0) {
-                int[] len = {0, 0};
-                byte[] Image = new byte[256 * 360];
-                a6.ZAZUpImage(DEV_ADDR, Image, len);
-                String str = "/mnt/sdcard/test.bmp";
-                a6.ZAZImgData2BMP(Image, str);
-                Bitmap bmpDefaultPic;
-                bmpDefaultPic = BitmapFactory.decodeFile(str, null);
-                fingerImage.setImageBitmap(bmpDefaultPic);
-            } else if (nRet == a6.PS_NO_FINGER) {
-                handler.postDelayed(fpTasks, 100);
-            } else if (nRet == a6.PS_GET_IMG_ERR) {
-                handler.postDelayed(fpTasks, 100);
-                return;
-            } else if (nRet == -2) {
-            } else {
-                return;
-            }
 
-        }
-    };
 }

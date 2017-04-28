@@ -1,10 +1,9 @@
 package com.mylibrary.realize;
 
-import android.app.AlertDialog;
+import android.app.Activity;
 import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.graphics.Bitmap;
@@ -25,8 +24,6 @@ import com.digitalpersona.uareu.dpfpddusbhost.DPFPDDUsbHost;
 import com.mylibrary.inf.IFingerPrint;
 import com.mylibrary.ulits.Globals;
 
-import java.text.DecimalFormat;
-
 /**
  * Created by suntianwei on 2017/4/6.
  */
@@ -34,8 +31,9 @@ import java.text.DecimalFormat;
 public class TCS1GRealize implements IFingerPrint {
     Handler handler;
 
-    public TCS1GRealize(Context context, Handler handler) {
+    public TCS1GRealize(Context context, Activity activity ,Handler handler) {
         mContext = context;
+        mActivity=activity;
         this.handler = handler;
     }
 
@@ -43,6 +41,7 @@ public class TCS1GRealize implements IFingerPrint {
     private int m_DPI = 0;
     private Reader.CaptureResult cap_result = null;
     private Context mContext;
+    private Activity   mActivity;
     private ReaderCollection readers;
     private String deviceName = "";
     private boolean m_reset = false;
@@ -62,6 +61,7 @@ public class TCS1GRealize implements IFingerPrint {
     public boolean closeReader() {
         try {
             m_reader.Close();
+            deviceName="";
         } catch (UareUException e) {
             e.printStackTrace();
         }
@@ -261,12 +261,7 @@ public class TCS1GRealize implements IFingerPrint {
                 } catch (Exception e) {
                     Log.w("UareUSampleJava", "Engine error: " + e.toString());
                 }
-                DecimalFormat formatting = new DecimalFormat("##.######");
-                m_text_conclusionString = "Dissimilarity Score: " + String.valueOf(m_score)
-                        + ", False match rate: " +
-                        Double.valueOf(formatting.format((double) m_score / 0x7FFFFFFF))
-                        + " (" + (m_score < (0x7FFFFFFF / 100000) ? "match" : "no match") + ")";
-                handler.sendMessage(handler.obtainMessage(7, m_text_conclusionString));
+                handler.sendMessage(handler.obtainMessage(7, m_score));
             }
         }).start();
 
@@ -282,8 +277,15 @@ public class TCS1GRealize implements IFingerPrint {
     }
 
     @Override
-    public void clearFinger() {
+    public boolean clearFinger() {
+        return false;
+    }
 
+    @Override
+    public void unObject() {
+        if (!deviceName.equals("")){
+            mContext.unregisterReceiver(mUsbReceiver);
+        }
     }
 
     @Override
@@ -408,15 +410,15 @@ public class TCS1GRealize implements IFingerPrint {
     }
 
     private void displayReaderNotFound() {
-        AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(mContext);
-        alertDialogBuilder.setTitle("Reader Not Found");
-        alertDialogBuilder.setMessage("Plug in a reader and try again.").setCancelable(false).setPositiveButton("Ok",
-                new DialogInterface.OnClickListener() {
-                    public void onClick(DialogInterface dialog, int id) {
-                    }
-                });
-        AlertDialog alertDialog = alertDialogBuilder.create();
-        alertDialog.show();
+//        AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(mActivity);
+//        alertDialogBuilder.setTitle("Reader Not Found");
+//        alertDialogBuilder.setMessage("Plug in a reader and try again.").setCancelable(false).setPositiveButton("Ok",
+//                new DialogInterface.OnClickListener() {
+//                    public void onClick(DialogInterface dialog, int id) {
+//                    }
+//                });
+//        AlertDialog alertDialog = alertDialogBuilder.create();
+//        alertDialog.show();
         state = false;
     }
 
