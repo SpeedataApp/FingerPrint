@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">My Library</string>
+    <string name="btn">启动扫描服务</string>
+    <string name="stop">关闭扫描服务</string>
+    <string name="show_information">把条形码完全取景器内</string>
+</resources>

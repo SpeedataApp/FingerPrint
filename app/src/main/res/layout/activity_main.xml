@@ -9,14 +9,19 @@
 
     <ScrollView
         android:layout_width="match_parent"
-        android:layout_height="150dp">
+        android:layout_height="30dp">
 
         <TextView
             android:id="@+id/tv_msg"
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content" />
+            android:layout_height="wrap_content"
+            android:text="请打开指纹"/>
     </ScrollView>
 
+    <TextView
+        android:id="@+id/tv_num"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" />
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -24,54 +29,82 @@
 
         <Button
             android:id="@+id/btn_open"
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_weight="1"
             android:text="打开" />
 
         <Button
             android:id="@+id/btn_colse"
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginLeft="10dp"
+            android:layout_weight="1"
             android:text="关闭" />
+
         <Button
             android:id="@+id/btn_getimage"
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginLeft="10dp"
+            android:layout_weight="1"
             android:text="图像" />
 
         <Button
-            android:id="@+id/btn_quality"
-            android:layout_width="wrap_content"
+            android:id="@+id/btn_Enroll"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginLeft="10dp"
-            android:text="质量" />
+            android:layout_weight="1"
+            android:text="注册" />
+
     </LinearLayout>
 
     <LinearLayout
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content">
+
+        <Button
+            android:id="@+id/btn_quality"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+
+            android:text="质量" />
+
         <Button
             android:id="@+id/btn_getTemplate"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="特征" />
-        <Button
-            android:id="@+id/btn_compare"
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginLeft="10dp"
+            android:layout_weight="1"
+            android:text="特征" />
+
+        <Button
+            android:id="@+id/btn_compare"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="10dp"
+            android:layout_weight="1"
             android:text="对比" />
-        
+
+        <Button
+            android:id="@+id/btn_search"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="10dp"
+            android:layout_weight="1"
+            android:text="搜索" />
+
     </LinearLayout>
     <!-- 孙天伟    -->
 
 
     <ImageView
         android:id="@+id/btn_imageView"
-        android:layout_width="300dp"
-        android:layout_height="300dp" />
+        android:layout_width="match_parent"
+        android:background="@drawable/finger"
+        android:layout_height="match_parent" />
 
 
 </LinearLayout>

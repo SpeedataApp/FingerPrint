@@ -2,99 +2,162 @@ package com.mylibrary.realize;
 
 import android.app.Activity;
 import android.content.Context;
-import android.os.Handler;
+import android.graphics.Bitmap;
+import android.graphics.Color;
 import android.util.Log;
 
 import com.IDWORLD.LAPI;
 import com.digitalpersona.uareu.Fmd;
 import com.mylibrary.inf.IFingerPrint;
+import com.mylibrary.inf.MsgCallBack;
+import com.mylibrary.ulits.Data;
 
 /**
  * Created by suntianwei on 2017/4/6.
  */
 
 public class TCS1BRealize implements IFingerPrint {
-    private String TAG = "TCS1B";
+    private String TAG = "Finger_TCS1B";
     private Context mContext;
     private Activity mActivity;
-    private Handler handler;
     private int m_hDevice;
     private LAPI mLapi;
     private byte[] m_image = new byte[LAPI.WIDTH * LAPI.HEIGHT];
     private byte[] mItemplate;
     private int qualitys;
+    private String msg = "";
+    private MsgCallBack callBack;
+    private Data data;
+    private Bitmap bmp;
 
-    public TCS1BRealize(Context context, Activity activity, Handler handler) {
+    public TCS1BRealize(Context context, Activity activity, MsgCallBack callBack) {
         mContext = context;
         mActivity = activity;
-        this.handler = handler;
+        this.callBack = callBack;
         mLapi = new LAPI(mActivity);
+        data = new Data();
     }
 
     @Override
-    public boolean openReader() {
+    public void openReader() {
         new Thread(new Runnable() {
             @Override
             public void run() {
                 m_hDevice = mLapi.OpenDeviceEx();
+                if (m_hDevice != 0) {
+                    data.setOpenFlag(true);
+                    data.setInfoMsg("打开成功");
+                    callBack.callBackInfo(data);
+                } else {
+                    data.setOpenFlag(false);
+                    data.setInfoMsg("打开失败");
+                    callBack.callBackInfo(data);
+                }
+                Log.i(TAG, m_hDevice + "open");
+
             }
         }).start();
-        if (m_hDevice == LAPI.FALSE) {
-            return false;
-        } else {
-            return true;
-        }
     }
 
     @Override
-    public boolean closeReader() {
-        if (m_hDevice == 0) {
-            return false;
-        } else {
-            mLapi.CloseDeviceEx(m_hDevice);
-            m_hDevice = 0;
-            return true;
+    public void closeReader() {
+        m_hDevice = mLapi.CloseDeviceEx(m_hDevice);
+        Log.i(TAG, m_hDevice + "close");
+        if (m_hDevice == 1) {//关闭成功
+            data.setOpenFlag(false);
+            data.setInfoMsg("关闭成功");
+            callBack.callBackInfo(data);
+        } else if (m_hDevice == 0) {
+            data.setOpenFlag(true);
+            data.setInfoMsg("关闭失败");
+            callBack.callBackInfo(data);
         }
     }
 
     @Override
     public void getImage() {
+        resetData();
         int ret;
         ret = mLapi.GetImage(m_hDevice, m_image);
         if (ret == LAPI.TRUE) {
-            handler.sendMessage(handler.obtainMessage(1, LAPI.WIDTH, LAPI.HEIGHT, m_image));
+            Log.i(TAG, "getImage: success");
+            data.setFingerBitmap(ShowFingerBitmap(m_image, LAPI.WIDTH, LAPI.HEIGHT));
+            data.setInfoMsg("getImage success");
+            callBack.callBackInfo(data);
         } else {
             Log.i(TAG, "Can't get image ! ");
+            data.setInfoMsg("get image faild !");
+            callBack.callBackInfo(data);
         }
+    }
+
+    private Bitmap ShowFingerBitmap(byte[] image, int width, int height) {
+        if (width == 0) {
+            return null;
+        }
+        if (height == 0) {
+            return null;
+        }
+        int[] RGBbits = new int[width * height];
+        for (int i = 0; i < width * height; i++) {
+            int v;
+            if (image != null) v = image[i] & 0xff;
+            else v = 0;
+            RGBbits[i] = Color.rgb(v, v, v);
+        }
+        return Bitmap.createBitmap(RGBbits, width, height, Bitmap.Config.RGB_565);
     }
 
     @Override
     public void createTemplate() {
         int ret;
-        String msg = "";
         ret = mLapi.GetImage(m_hDevice, m_image);
         if (ret == LAPI.TRUE) {
-            handler.sendMessage(handler.obtainMessage(1, LAPI.WIDTH, LAPI.HEIGHT, m_image));
-            getImageQualitys();
-            if (qualitys > 50) {
+            data.setFingerBitmap(ShowFingerBitmap(m_image, LAPI.WIDTH, LAPI.HEIGHT));
+            data.setInfoMsg("getImage  success");
+            qualitys = mLapi.GetImageQuality(m_hDevice, m_image);
+            data.setFinferQualitys(qualitys);
+            if (qualitys > 30) {
                 ret = mLapi.IsPressFinger(m_hDevice, m_image);//判断手指是否在指纹模板上、返回值0-100
                 if (ret != 0) {
                     mItemplate = new byte[LAPI.FPINFO_STD_MAX_SIZE];
                     ret = mLapi.CreateTemplate(m_hDevice, m_image, mItemplate);
                     if (ret == 0) {
                         msg = "Can't create template !";
+                        Log.i(TAG, msg);
+                        data.setInfoMsg(msg);
+                        callBack.callBackInfo(data);
                     } else {
+                        msg = "";
                         for (int i = 0; i < LAPI.FPINFO_STD_MAX_SIZE; i++) {
                             msg += String.format("%02x", mItemplate[i]);
                         }
                         Log.e("finger", "senMessage: " + msg);
-                        handler.sendMessage(handler.obtainMessage(3, mItemplate));
+
+                        data.setInfoMsg("createTemplate success");
+                        data.setTemplateBytes(mItemplate);
+                        callBack.callBackInfo(data);
                     }
+                } else {
+                    msg = "No finger on reader !";
+                    Log.i(TAG, msg);
+                    data.setInfoMsg(msg);
+                    callBack.callBackInfo(data);
                 }
+
             } else {
-//            handler.sendMessage(handler.obtainMessage(9, mItemplate));
+                data.setInfoMsg("质量太差!");
+                data.setTemplateBytes(null);
+                callBack.callBackInfo(data);
             }
         }
+
+    }
+
+    private void resetData() {
+        data.setTemplateBytes(null);
+        data.setInfoMsg("");
+//        data.setFingerBitmap(null);
     }
 
     @Override
@@ -108,11 +171,27 @@ public class TCS1BRealize implements IFingerPrint {
     }
 
     @Override
+    public void comparisonFinger() {
+
+    }
+
+    @Override
     public void comparisonFinger(byte[] bytes1, byte[] bytes2) {
         int score;
+//        data.setTemplateBytes(null);
+        resetData();
         if (bytes1 != null && bytes2 != null) {
             score = mLapi.CompareTemplates(m_hDevice, bytes1, bytes2);//返回指纹模板对比分数
-            handler.sendMessage(handler.obtainMessage(4, score));
+            Log.i(TAG, "comparisonFinger: " + score);
+            data.setComparisonNum(score);
+            callBack.callBackInfo(data);
+//            handler.sendMessage(handler.obtainMessage(4, score));
+        } else {
+            msg = "ComparrisonFinger failed 请获取特征!";
+            Log.i(TAG, "comparisonFinger: " + msg);
+            data.setInfoMsg(msg);
+            callBack.callBackInfo(data);
+//            handler.sendMessage(handler.obtainMessage(0, msg));
         }
 
     }
@@ -124,7 +203,8 @@ public class TCS1BRealize implements IFingerPrint {
 
     private void getImageQualitys() {
         qualitys = mLapi.GetImageQuality(m_hDevice, m_image);
-        handler.sendMessage(handler.obtainMessage(2, qualitys));
+        data.setFinferQualitys(qualitys);
+        callBack.callBackInfo(data);
     }
 
     @Override
@@ -133,7 +213,16 @@ public class TCS1BRealize implements IFingerPrint {
     }
 
     @Override
-    public void unObject() {
+    public void searchFinger() {
 
     }
+
+    @Override
+    public void unObject() {
+        if (data != null) {
+            data = null;
+        }
+    }
+
+
 }
