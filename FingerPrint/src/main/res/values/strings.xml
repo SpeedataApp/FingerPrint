@@ -1,15 +1,41 @@
 <resources>
-    <string name="app_name">My Library</string>
-    <string name="hello">PoliceFp SDK</string>
-    <string name="OPEN_DEVICE">OpenReader</string>
-    <string name="CLOSE_DEVICE">CloseReader</string>
-    <string name="GET_IMAGE">GetImage</string>
-    <string name="GET_QUALITY">GetImageQuality</string>
-    <string name="CREATE_TEMP">CreateTemplate</string>
-    <string name="MATCH_TEMP">CompareTemplates</string>
-    <string name="CHAR">Template</string>
-    <string name="IMAGE">Image</string>
-    <string name="VIDEO">Video</string>
-    <string name="FIRST_TEMPLATE">Template1</string>
-    <string name="SECOND_TEMPLATE">Template2</string>
+    <string name="app_name">FINGER</string>
+
+    <string name="init_fingerReader">The initial reader failed</string>
+
+    <string name="opne_success">Open successfully</string>
+    <string name="opne_fail">Open failed</string>
+
+    <string name="close_success">Closed successfully</string>
+    <string name="close_fail">Close failed</string>
+
+    <string name="get_image_fail">Get image failed</string>
+    <string name="get_image_success">Get image success</string>
+
+    <string name="enrollment_success">Enrollment success</string>
+    <string name="enrollment_fail">Enrollment failed</string>
+
+    <string name="template_success">Create a fingerprint feature successfully</string>
+    <string name="template_fail">Failed to create fingerprint feature</string>
+
+    <string name="on_reader_nofinger">There is no finger on the sensor</string>
+    <string name="communication_erro">Communication error</string>
+    <string name="receive_erro">The received packet failed</string>
+    <string name="template_bad">Feature bad re-entry</string>
+    <string name="RegModulefail_str">Synthetic template failed</string>
+    <string name="get_image_again">Get the fingerprint successfully and get it again</string>
+    <string name="search_fail">Search failed, please register fingerprint!</string>
+    <string name="search_failed">Search failed!</string>
+
+
+    <string name="quality_bad">Poor quality</string>
+
+    <string name="ComparrisonFinger_failed">If the comparison fails, create the feature again</string>
+
+
+
+
+    <string name="same_finger">Continue to place the same finger on the reader</string>
+    <string name="any_finger">Place any finger on the reader</string>
 </resources>
+

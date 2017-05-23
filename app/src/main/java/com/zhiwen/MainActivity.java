@@ -11,6 +11,7 @@ import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
+import android.os.SystemClock;
 import android.serialport.DeviceControl;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
@@ -27,7 +28,8 @@ import com.mylibrary.ulits.Data;
 
 import java.io.IOException;
 
-public class MainActivity extends AppCompatActivity implements View.OnClickListener {
+
+public class MainActivity extends AppCompatActivity implements View.OnClickListener{
     Button btnOpen, btnGetImage, btnGetQuality, btnColse, btnCompare,
             btnCreateTemplate, btnEnroll, btnSearch;
     ImageView fingerImage = null;
@@ -55,7 +57,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private long now;
     private long start;
     Bitmap bitmap = null;
-    private Data data;
+    private Data datas;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -107,22 +109,23 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         super.onResume();
         start = System.currentTimeMillis();
         mProgressDialog = new ProgressDialog(this);
-        mProgressDialog.setTitle("搜索指纹模板 ");
-        mProgressDialog.setMessage("初始中……");
+        mProgressDialog.setTitle(getString(R.string.search_finger));
+        mProgressDialog.setMessage(getString(R.string.init_finger));
         mProgressDialog.setCancelable(false);
         mProgressDialog.show();
-//        dialog = CreateDialog.showLoadingDialog(MainActivity.this, "搜索指纹模板");
         new Thread(new Runnable() {
             @Override
             public void run() {
+                SystemClock.sleep(2000);
                 while (iFingerPrint == null) {
                     now = System.currentTimeMillis();
-                    iFingerPrint = FingerManger.getIFingerPrintIntance(MainActivity.this, MainActivity.this, handler, new MsgCallBack() {
-                        @Override
-                        public void callBackInfo(Data data) {
+                    iFingerPrint = FingerManger.getIFingerPrintIntance
+                            (MainActivity.this, MainActivity.this, handler, new MsgCallBack() {
+                                @Override
+                                public void callBackInfo(Data data) {
                             handler.sendMessage(handler.obtainMessage(22, data));
-                        }
-                    });
+                                }
+                            });
                     if (now - start > 6000) {
                         finish();
                         break;
@@ -132,11 +135,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     @Override
                     public void run() {
                         if (iFingerPrint != null) {
-//                            CreateDialog.closeDialog(dialog);
                             mProgressDialog.cancel();
                         } else {
                             finish();
-                            Toast.makeText(MainActivity.this, "初始失败", Toast.LENGTH_SHORT).show();
+                            Toast.makeText(MainActivity.this, getString(R.string.init_finger_failed), Toast.LENGTH_SHORT).show();
                         }
                     }
                 });
@@ -151,33 +153,33 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             super.handleMessage(msg);
             switch (msg.what) {
                 case 22:
-                    data = (Data) msg.obj;
-                    if (data.isOpenFlag()) {
+                    datas = (Data) msg.obj;
+                    if (datas.isOpenFlag()) {
                         setBtnState(true);
                         btnOpen.setEnabled(false);
                     } else {
                         setBtnState(false);
                         btnOpen.setEnabled(true);
-                        tvMsg.setText(data.getInfoMsg());
+                        tvMsg.setText(datas.getInfoMsg());
                     }
-                    if (data.getTcs1gFmd() != null) {
+                    if (datas.getTcs1gFmd() != null) {
 
                         if (template) {
 //                            template +=1;
                             template = false;
-                            fmd1 = data.getTcs1gFmd();
+                            fmd1 = datas.getTcs1gFmd();
                             Toast.makeText(MainActivity.this, "fmd1", Toast.LENGTH_SHORT).show();
                         } else {
                             template = true;
-                            fmd2 = data.getTcs1gFmd();
+                            fmd2 = datas.getTcs1gFmd();
                             Toast.makeText(MainActivity.this, "fmd2", Toast.LENGTH_SHORT).show();
                         }
                     }
-                    if (data.getTemplateBytes() != null) {
+                    if (datas.getTemplateBytes() != null) {
                         if (template) {
                             template = false;
                             template1 = new byte[1024];
-                            template1 = data.getTemplateBytes();
+                            template1 = datas.getTemplateBytes();
 //                    for (int i = 0; i < LAPI.FPINFO_STD_MAX_SIZE; i++) {
 //                        sss += String.format("%02x", template1[i]);
 //                    }
@@ -188,7 +190,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                         } else {
                             template = true;
                             template2 = new byte[1024];
-                            template2 = data.getTemplateBytes();
+                            template2 = datas.getTemplateBytes();
 //                    for (int i = 0; i < LAPI.FPINFO_STD_MAX_SIZE; i++) {
 //                        ssss += String.format("%02x", template2[i]);
 //                    }
@@ -196,8 +198,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                             Toast.makeText(MainActivity.this, "template2", Toast.LENGTH_SHORT).show();
                         }
                     }
-                    tvMsg.setText(data.getInfoMsg());
-                    fingerImage.setImageBitmap(data.getFingerBitmap());
+                    tvMsg.setText(datas.getInfoMsg());
+                    fingerImage.setImageBitmap(datas.getFingerBitmap());
                     break;
                 default:
                     break;
@@ -236,17 +238,15 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             iFingerPrint.closeReader();
         } else if (view == btnGetImage) {
             iFingerPrint.getImage();
-
-
         } else if (view == btnGetQuality) {
             iFingerPrint.getImageQuality();
-            tvMsg.setText(data.getInfoMsg());
-            tvNum.setText(String.format("质量 = %d", data.getFinferQualitys()));
+            tvMsg.setText(datas.getInfoMsg());
+            tvNum.setText(String.format("Quality = %d", datas.getFinferQualitys()));
 
         } else if (view == btnCreateTemplate) {
             iFingerPrint.createTemplate();
 
-//            tvMsg.setText(data.getInfoMsg());
+//            tvMsg.setText(datas.getInfoMsg());
         } else if (view == btnCompare) {
 //            for (int i = 0; i < template1.length; i++) {
 //                s1 += String.format("%02x", template1[i]);
@@ -259,8 +259,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             iFingerPrint.comparisonFinger(template1, template2);
             iFingerPrint.comparisonFinger(fmd1, fmd2);
             iFingerPrint.comparisonFinger();
-            tvMsg.setText(data.getInfoMsg());
-            tvNum.setText("比对分数：" + data.getComparisonNum() + "");
+            tvMsg.setText(datas.getInfoMsg());
+            tvNum.setText(getString(R.string.comparison_finger) +":"+ datas.getComparisonNum() + "");
         } else if (view == btnEnroll) {
             iFingerPrint.enrollment();
         } else if (view == btnSearch) {
@@ -287,8 +287,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         if (handler != null) {
             handler = null;
         }
-        if (data != null) {
-            data = null;
+        if (datas != null) {
+            datas = null;
+        }
+        if (mProgressDialog != null) {
+            mProgressDialog.cancel();
         }
         fingerImage.refreshDrawableState();
         if (iFingerPrint != null) {

@@ -20,6 +20,7 @@ import com.digitalpersona.uareu.UareUException;
 import com.digitalpersona.uareu.UareUGlobal;
 import com.digitalpersona.uareu.dpfpddusbhost.DPFPDDUsbException;
 import com.digitalpersona.uareu.dpfpddusbhost.DPFPDDUsbHost;
+import com.mylibrary.R;
 import com.mylibrary.inf.IFingerPrint;
 import com.mylibrary.inf.MsgCallBack;
 import com.mylibrary.ulits.Data;
@@ -83,11 +84,11 @@ public class TCS1GRealize implements IFingerPrint {
         } catch (Exception e) {
             Log.w(TAG, "error during reader shutdown");
             data.setOpenFlag(true);
-            data.setInfoMsg("关闭失败");
+            data.setInfoMsg(mContext.getString(R.string.close_fail));
             callBack.callBackInfo(data);
         }
         data.setOpenFlag(false);
-        data.setInfoMsg("关闭成功");
+        data.setInfoMsg(mContext.getString(R.string.close_success));
         callBack.callBackInfo(data);
     }
 
@@ -116,7 +117,7 @@ public class TCS1GRealize implements IFingerPrint {
                         String m_text_conclusionString = Globals.QualityToString(cap_result);
                         if (m_text_conclusionString.length() == 0) {
                             data.setFingerBitmap(m_bitmap);
-                            data.setInfoMsg("获取指纹成功");
+                            data.setInfoMsg(mContext.getString(R.string.get_image_success));
                             callBack.callBackInfo(data);
                         } else {
                             data.setInfoMsg(m_text_conclusionString);
@@ -126,8 +127,6 @@ public class TCS1GRealize implements IFingerPrint {
                 } catch (Exception e) {
                     if (!m_reset) {
                         Log.w(TAG, "error during capture: " + e.toString());
-                        data.setInfoMsg("获取图像异常");
-                        callBack.callBackInfo(data);
                         onBackPressed();
                     }
                 }
@@ -137,7 +136,8 @@ public class TCS1GRealize implements IFingerPrint {
 
     @Override
     public void enrollment() {
-        m_textString = "Place any finger on the reader";
+        data.setInfoMsg(mContext.getString(R.string.any_finger));
+        callBack.callBackInfo(data);
         onBackPressed();
         initReader();
         new Thread(new Runnable() {
@@ -228,6 +228,7 @@ public class TCS1GRealize implements IFingerPrint {
                 if (!m_first) {
                     if (m_text_conclusionString.length() == 0) {
                         m_textString = m_success ? "Enrollment template created, size: " + m_templateSize : "Enrollment template failed. Please try again";
+                        data.setInfoMsg(m_textString);
                     }
                 }
 //                m_textString = "Place any finger on the reader";
@@ -235,11 +236,10 @@ public class TCS1GRealize implements IFingerPrint {
             } else {
                 m_first = false;
                 m_success = false;
-                m_textString = "Continue to place the same finger on the reader";
+                data.setInfoMsg(mContext.getString(R.string.same_finger));
             }
 
             //跟新主线程
-            data.setInfoMsg(m_textString);
             data.setFingerBitmap(m_bitmap);
             callBack.callBackInfo(data);
             return result;
@@ -309,7 +309,8 @@ public class TCS1GRealize implements IFingerPrint {
         if (data != null) {
             data = null;
         }
-        if (!deviceName.equals("")){
+
+        if (!deviceName.equals("")) {
             mContext.unregisterReceiver(mUsbReceiver);
         }
     }
@@ -334,13 +335,12 @@ public class TCS1GRealize implements IFingerPrint {
                         if (m_text_conclusionString.length() == 0) {
 //                            handler.sendMessage(handler.obtainMessage(5, m_bitmap));
                             data.setFingerBitmap(m_bitmap);
-                            data.setInfoMsg("获取指纹成功");
-                            callBack.callBackInfo(data);
+                            data.setInfoMsg(mContext.getString(R.string.get_image_success));
                             mFmd = m_engine.CreateFmd(cap_result.image, Fmd.Format.ANSI_378_2004);
                             if (mFmd != null) {
 //                                handler.sendMessage(handler.obtainMessage(6, mFmd));
                                 data.setTcs1gFmd(mFmd);
-                                data.setInfoMsg("创建指纹FMD成功");
+                                data.setInfoMsg(mContext.getString(R.string.template_success));
                                 callBack.callBackInfo(data);
                                 m_reset = true;
                             }
@@ -361,7 +361,6 @@ public class TCS1GRealize implements IFingerPrint {
     }
 
     public void onBackPressed() {
-        resetData();
         try {
             m_reset = true;
             try {
@@ -371,7 +370,6 @@ public class TCS1GRealize implements IFingerPrint {
             m_reader.Close();
         } catch (Exception e) {
             Log.w(TAG, "error during reader shutdown");
-
         }
     }
 
@@ -383,7 +381,7 @@ public class TCS1GRealize implements IFingerPrint {
             m_engine = UareUGlobal.GetEngine();
         } catch (Exception e) {
             Log.w(TAG, "error during init of reader");
-            data.setInfoMsg("初始reader失败");
+            data.setInfoMsg(mContext.getString(R.string.init_fingerReader));
             callBack.callBackInfo(data);
             return;
         }
@@ -428,13 +426,13 @@ public class TCS1GRealize implements IFingerPrint {
 
     public void CheckDevice() {
         data.setOpenFlag(true);
-        data.setInfoMsg("打开指纹成功");
+        data.setInfoMsg(mContext.getString(R.string.opne_success));
         callBack.callBackInfo(data);
     }
 
     private void displayReaderNotFound() {
         data.setOpenFlag(false);
-        data.setInfoMsg("打开指纹失败");
+        data.setInfoMsg(mContext.getString(R.string.opne_fail));
         callBack.callBackInfo(data);
     }
 

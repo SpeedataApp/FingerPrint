@@ -27,6 +27,7 @@ public class FingerManger {
         mContext = context;
         mActivity = activity;
         state = FingerTypes.getrwusbdevices(mContext);
+        Log.i(TAG, "getIFingerPrintIntance:state "+state);
 //        if (iFingerPrint == null) {
         switch (state) {
             case 0:

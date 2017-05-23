@@ -1,3 +1,8 @@
 <resources>
     <string name="app_name">ZhiWen</string>
+    <string name="open_reader">Please open the fingerprint</string>
+    <string name="search_finger">Search  fingerprint template</string>
+    <string name="init_finger">Initial ...</string>
+    <string name="init_finger_failed">Initial failed</string>
+    <string name="comparison_finger">Match score</string>
 </resources>

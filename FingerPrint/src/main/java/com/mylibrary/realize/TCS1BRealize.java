@@ -8,6 +8,7 @@ import android.util.Log;
 
 import com.IDWORLD.LAPI;
 import com.digitalpersona.uareu.Fmd;
+import com.mylibrary.R;
 import com.mylibrary.inf.IFingerPrint;
 import com.mylibrary.inf.MsgCallBack;
 import com.mylibrary.ulits.Data;
@@ -46,11 +47,11 @@ public class TCS1BRealize implements IFingerPrint {
                 m_hDevice = mLapi.OpenDeviceEx();
                 if (m_hDevice != 0) {
                     data.setOpenFlag(true);
-                    data.setInfoMsg("打开成功");
+                    data.setInfoMsg(mContext.getString(R.string.opne_success));
                     callBack.callBackInfo(data);
                 } else {
                     data.setOpenFlag(false);
-                    data.setInfoMsg("打开失败");
+                    data.setInfoMsg(mContext.getString(R.string.opne_fail));
                     callBack.callBackInfo(data);
                 }
                 Log.i(TAG, m_hDevice + "open");
@@ -65,11 +66,11 @@ public class TCS1BRealize implements IFingerPrint {
         Log.i(TAG, m_hDevice + "close");
         if (m_hDevice == 1) {//关闭成功
             data.setOpenFlag(false);
-            data.setInfoMsg("关闭成功");
+            data.setInfoMsg(mContext.getString(R.string.close_success));
             callBack.callBackInfo(data);
         } else if (m_hDevice == 0) {
             data.setOpenFlag(true);
-            data.setInfoMsg("关闭失败");
+            data.setInfoMsg(mContext.getString(R.string.opne_fail));
             callBack.callBackInfo(data);
         }
     }
@@ -82,11 +83,11 @@ public class TCS1BRealize implements IFingerPrint {
         if (ret == LAPI.TRUE) {
             Log.i(TAG, "getImage: success");
             data.setFingerBitmap(ShowFingerBitmap(m_image, LAPI.WIDTH, LAPI.HEIGHT));
-            data.setInfoMsg("getImage success");
+            data.setInfoMsg(mContext.getString(R.string.get_image_success));
             callBack.callBackInfo(data);
         } else {
             Log.i(TAG, "Can't get image ! ");
-            data.setInfoMsg("get image faild !");
+            data.setInfoMsg(mContext.getString(R.string.get_image_fail));
             callBack.callBackInfo(data);
         }
     }
@@ -114,7 +115,7 @@ public class TCS1BRealize implements IFingerPrint {
         ret = mLapi.GetImage(m_hDevice, m_image);
         if (ret == LAPI.TRUE) {
             data.setFingerBitmap(ShowFingerBitmap(m_image, LAPI.WIDTH, LAPI.HEIGHT));
-            data.setInfoMsg("getImage  success");
+            data.setInfoMsg(mContext.getString(R.string.get_image_success));
             qualitys = mLapi.GetImageQuality(m_hDevice, m_image);
             data.setFinferQualitys(qualitys);
             if (qualitys > 30) {
@@ -125,7 +126,7 @@ public class TCS1BRealize implements IFingerPrint {
                     if (ret == 0) {
                         msg = "Can't create template !";
                         Log.i(TAG, msg);
-                        data.setInfoMsg(msg);
+                        data.setInfoMsg(mContext.getString(R.string.template_fail));
                         callBack.callBackInfo(data);
                     } else {
                         msg = "";
@@ -134,19 +135,19 @@ public class TCS1BRealize implements IFingerPrint {
                         }
                         Log.e("finger", "senMessage: " + msg);
 
-                        data.setInfoMsg("createTemplate success");
+                        data.setInfoMsg(mContext.getString(R.string.template_success));
                         data.setTemplateBytes(mItemplate);
                         callBack.callBackInfo(data);
                     }
                 } else {
                     msg = "No finger on reader !";
                     Log.i(TAG, msg);
-                    data.setInfoMsg(msg);
+                    data.setInfoMsg(mContext.getString(R.string.on_reader_nofinger));
                     callBack.callBackInfo(data);
                 }
 
             } else {
-                data.setInfoMsg("质量太差!");
+                data.setInfoMsg(mContext.getString(R.string.quality_bad));
                 data.setTemplateBytes(null);
                 callBack.callBackInfo(data);
             }
@@ -185,11 +186,10 @@ public class TCS1BRealize implements IFingerPrint {
             Log.i(TAG, "comparisonFinger: " + score);
             data.setComparisonNum(score);
             callBack.callBackInfo(data);
-//            handler.sendMessage(handler.obtainMessage(4, score));
         } else {
             msg = "ComparrisonFinger failed 请获取特征!";
             Log.i(TAG, "comparisonFinger: " + msg);
-            data.setInfoMsg(msg);
+            data.setInfoMsg(mContext.getString(R.string.ComparrisonFinger_failed));
             callBack.callBackInfo(data);
 //            handler.sendMessage(handler.obtainMessage(0, msg));
         }
