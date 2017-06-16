@@ -43,17 +43,20 @@ public class FingerTypes {
                             + Integer.toHexString(device.getProductId()));
             device.getVendorId();
             device.getProductId();
-            if ((device.getVendorId() == BVID) && (BPID == device.getProductId())) {
-                //返回公安部不指纹模块
-                return 1;
-            } else if ((device.getVendorId() == MVID) && (MPID == device.getProductId())) {
-                //返回民用指纹模块
-                return 2;
-            } else {
-                //返回金色指纹（tcs1G海外版）
-                return 3;
+            for (UsbDevice tdevice : deviceList.values()) {
+                if ((device.getVendorId() == BVID) && (BPID == device.getProductId())) {
+                    //返回公安部不指纹模块
+                    return 1;
+                } else if ((device.getVendorId() == MVID) && (MPID == device.getProductId())) {
+                    //返回民用指纹模块
+                    return 2;
+                } else {
+                    //返回金色指纹（tcs1G海外版）
+                    return 3;
+                }
             }
         }
         return 0;
     }
+
 }

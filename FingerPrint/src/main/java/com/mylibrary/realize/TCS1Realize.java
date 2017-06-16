@@ -4,10 +4,10 @@ import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.Handler;
-import android.os.SystemClock;
 import android.util.Log;
 
 import com.digitalpersona.uareu.Fmd;
+import com.mylibrary.R;
 import com.mylibrary.inf.IFingerPrint;
 import com.mylibrary.ulits.OpenDevice;
 import com.za.finger.ZAandroid;
@@ -19,68 +19,70 @@ import com.za.finger.ZAandroid;
 public class TCS1Realize implements IFingerPrint {
     Context mContext;
     Handler handler;
-    Handler handlers;
     ZAandroid a6 = null;
     private static int DEV_ADDR = 0xffffffff;
     private static int IMG_SIZE = 0;//同参数：（0:256x288 1:256x360）
     private int stada;
+    private int fpcharbuf = 1;
     private String TAG = "Tcs1";
+    private Thread thread;
 
     public TCS1Realize(Context context, Handler handler) {
         mContext = context;
         this.handler = handler;
-//        handlers = new Handler();
     }
 
     @Override
-    public boolean openReader() {
+    public void openReader() {
         a6 = new ZAandroid();
         final OpenDevice openDevice = new OpenDevice();
+//        handler.postDelayed(r,0);
         Runnable r = new Runnable() {
             public void run() {
                 stada = openDevice.OpenDev(mContext, a6, DEV_ADDR, IMG_SIZE, 0);
+                if (stada == 0) {
+                    handler.sendMessage(handler.obtainMessage(1, true));
+                } else {
+                    handler.sendMessage(handler.obtainMessage(1, false));
+                }
 
             }
         };
-        Thread s = new Thread(r);
-        s.start();
-        if (stada == 0) {
-            return true;
-        } else {
-            return false;
-        }
+        thread = new Thread(r);
+        thread.start();
     }
 
     @Override
-    public boolean closeReader() {
-        int status = 2;
+    public void closeReader() {
+        int status = a6.ZAZCloseDeviceEx();
+        Log.e(TAG, " close status: " + status);
         if (stada == 0) {
-            status = a6.ZAZCloseDeviceEx();
-            Log.e(TAG, " close status: " + status);
-        }
-
-        if (status == 0) {
-            return true;
+            thread.interrupt();
+            thread = null;
+            removeCallbacks();
+            handler.sendMessage(handler.obtainMessage(2, true));
         } else {
-            return false;
+            removeCallbacks();
+            handler.sendMessage(handler.obtainMessage(2, false));
         }
-
     }
 
     @Override
     public void getImage() {
         removeCallbacks();
-        handlers.postDelayed(fpTasks, 0);
+        handler.postDelayed(getFpTasks, 0);
     }
 
     private void removeCallbacks() {
-        handler.removeCallbacks(Characteristic);
-        handler.removeCallbacks(fpTasks);
+        handler.removeCallbacks(templateTask);
+        handler.removeCallbacks(getFpTasks);
+        handler.removeCallbacks(enrollmentTasks);
+        handler.removeCallbacks(ComparisonTasks);
+        handler.removeCallbacks(searchTasks);
     }
 
-    private Runnable fpTasks = new Runnable() {
-        public void run()// 运行该服务执行此函数
-        {
+    private Runnable getFpTasks = new Runnable() {
+        public void run() {
             int nRet = 0;
             nRet = a6.ZAZGetImage(DEV_ADDR);
             if (nRet == 0) {
@@ -88,64 +90,72 @@ public class TCS1Realize implements IFingerPrint {
                 byte[] Image = new byte[256 * 360];
                 a6.ZAZUpImage(DEV_ADDR, Image, len);
                 String str = "/mnt/sdcard/test.bmp";
-                int iii = a6.ZAZImgData2BMP(Image, str);
+                a6.ZAZImgData2BMP(Image, str);
                 Bitmap bmpDefaultPic = BitmapFactory.decodeFile(str);
-                handler.sendMessage(handler.obtainMessage(10, bmpDefaultPic));
+                handler.sendMessage(handler.obtainMessage(3, bmpDefaultPic));
+                handler.postDelayed(getFpTasks, 1000);
             } else if (nRet == a6.PS_NO_FINGER) {
-                handlers.postDelayed(fpTasks, 100);
+                handler.sendMessage(handler.obtainMessage(0, mContext.getString(R.string.on_reader_nofinger)));
+                handler.postDelayed(getFpTasks, 100);
+
             } else if (nRet == a6.PS_GET_IMG_ERR) {
-                handlers.postDelayed(fpTasks, 100);
+                handler.sendMessage(handler.obtainMessage(0, mContext.getString(R.string.get_image_fail)));
+                handler.postDelayed(getFpTasks, 100);
                 return;
             } else if (nRet == -2) {
+                handler.sendMessage(handler.obtainMessage(0, mContext.getString(R.string.receive_erro)));
+                removeCallbacks();
             } else {
+                handler.sendMessage(handler.obtainMessage(0, mContext.getString(R.string.communication_erro)));
+                removeCallbacks();
                 return;
             }
-
         }
     };
 
     @Override
     public void createTemplate() {
         removeCallbacks();
-        handler.postDelayed(Characteristic, 0);
+        handler.postDelayed(templateTask, 0);
     }
 
     byte[] pTemplet = null;
-    private Runnable Characteristic = new Runnable() {
+    private Runnable templateTask = new Runnable() {
         // 运行该服务执行此函数
         public void run() {
             int nRet = 0;
             nRet = a6.ZAZGetImage(DEV_ADDR);
             if (nRet == 0) {
-                SystemClock.sleep(200);
-                nRet = a6.ZAZGetImage(DEV_ADDR);
-            }
-            if (nRet == 0) {
-                nRet = a6.ZAZGenChar(DEV_ADDR, a6.CHAR_BUFFER_A);// != PS_OK) {
+                nRet = a6.ZAZGenChar(DEV_ADDR, a6.CHAR_BUFFER_A);
                 if (nRet == a6.PS_OK) {
                     int[] iTempletLength = {0, 0};
                     pTemplet = new byte[512];
                     a6.ZAZSetCharLen(512);
                     nRet = a6.ZAZUpChar(DEV_ADDR, a6.CHAR_BUFFER_A, pTemplet, iTempletLength);
                     if (nRet == a6.PS_OK) {
-                        handler.sendMessage(handler.obtainMessage(11, pTemplet));
+
+                        handler.sendMessage(handler.obtainMessage(4, pTemplet));
                     }
                     nRet = a6.ZAZDownChar(DEV_ADDR, a6.CHAR_BUFFER_A, pTemplet, iTempletLength[0]);
                     if (nRet == a6.PS_OK) {
                     }
                 } else {
-                    handler.postDelayed(Characteristic, 1000);
-
+                    handler.sendMessage(handler.obtainMessage(0, mContext.getString(R.string.template_bad)));
+                    handler.postDelayed(templateTask, 600);
                 }
             } else if (nRet == a6.PS_NO_FINGER) {
-                handler.postDelayed(Characteristic, 10);
+                handler.postDelayed(templateTask, 100);
             } else if (nRet == a6.PS_GET_IMG_ERR) {
-                handler.postDelayed(Characteristic, 10);
+                handler.sendMessage(handler.obtainMessage(0, mContext.getString(R.string.get_image_fail)));
+                handler.postDelayed(templateTask, 100);
                 return;
             } else if (nRet == -2) {
-
+                handler.sendMessage(handler.obtainMessage(0, mContext.getString(R.string.receive_erro)));
+                removeCallbacks();
                 return;
             } else {
+                handler.sendMessage(handler.obtainMessage(0, mContext.getString(R.string.communication_erro)));
+                removeCallbacks();
                 return;
             }
 
@@ -154,8 +164,65 @@ public class TCS1Realize implements IFingerPrint {
 
     @Override
     public void enrollment() {
-
+        removeCallbacks();
+        fpcharbuf = 1;
+        handler.postDelayed(enrollmentTasks, 0);
     }
+
+    private int iPageID = 0;
+    byte[] pTempletbase = new byte[2304];
+    private Runnable enrollmentTasks = new Runnable() {
+        public void run()// 运行该服务执行此函数
+        {
+            int nRet = 0;
+            nRet = a6.ZAZGetImage(DEV_ADDR);
+            if (nRet == 0) {
+                nRet = a6.ZAZGenChar(DEV_ADDR, fpcharbuf);
+                if (nRet == a6.PS_OK) {
+                    fpcharbuf++;
+                    if (fpcharbuf > 2) {
+                        nRet = a6.ZAZRegModule(DEV_ADDR);
+                        if (nRet != a6.PS_OK) {
+                            handler.sendMessage(handler.obtainMessage(0, mContext.getString(R.string.RegModulefail_str)));
+                        } else {
+                            nRet = a6.ZAZStoreChar(DEV_ADDR, 1, iPageID);
+                            if (nRet == a6.PS_OK) {
+
+                                int[] iTempletLength = new int[1];
+                                nRet = a6.ZAZUpChar(DEV_ADDR, 1, pTempletbase, iTempletLength);
+                                handler.sendMessage(handler.obtainMessage(7, iPageID));
+                                iPageID++;
+                            } else {
+                            }
+                        }
+                    } else {
+                        handler.sendMessage(handler.obtainMessage(0, mContext.getString(R.string.get_image_again)));
+                        handler.postDelayed(enrollmentTasks, 800);
+
+                    }
+                } else {
+                    handler.sendMessage(handler.obtainMessage(0, mContext.getString(R.string.template_bad)));
+                    handler.postDelayed(enrollmentTasks, 1000);
+                }
+            } else if (nRet == a6.PS_NO_FINGER) {
+                handler.sendMessage(handler.obtainMessage(0, mContext.getString(R.string.on_reader_nofinger)));
+                handler.postDelayed(enrollmentTasks, 100);
+            } else if (nRet == a6.PS_GET_IMG_ERR) {
+                handler.sendMessage(handler.obtainMessage(0, mContext.getString(R.string.get_image_fail)));
+                removeCallbacks();
+                return;
+            } else if (nRet == -2) {
+                handler.sendMessage(handler.obtainMessage(0, mContext.getString(R.string.receive_erro)));
+                handler.postDelayed(enrollmentTasks, 100);
+                return;
+            } else {
+                handler.sendMessage(handler.obtainMessage(0, mContext.getString(R.string.communication_erro)));
+                removeCallbacks();
+                return;
+            }
+
+        }
+    };
 
     @Override
     public void comparisonFinger(Fmd fmd1, Fmd fmd2) {
@@ -166,65 +233,126 @@ public class TCS1Realize implements IFingerPrint {
     public void comparisonFinger(byte[] bytes1, byte[] bytes2) {
 
     }
-  int fpcharbuf=1;
-//    private Runnable ComparisonTasks = new Runnable() {
-//        // 运行该服务执行此函数
-//        public void run() {
-//            String temp = "";
-//            long timecount = 0;
-//            int nRet = 0;
-//            nRet = a6.ZAZGetImage(DEV_ADDR);
-//            if (nRet == 0) {
-//                nRet = a6.ZAZGetImage(DEV_ADDR);
-//            }
-//            if (nRet == 0) {
-//
-//                //nRet = a6.ZAZLoadChar( DEV_ADDR,2,1);
-//                //a6.ZAZSetCharLen(2304);
-//                //nRet = a6.ZAZDownChar(DEV_ADDR, 2, pTempletbase, 2304);
-//                nRet = a6.ZAZGenChar(DEV_ADDR, fpcharbuf);// != PS_OK) {
-//                if (nRet == a6.PS_OK) {
-//                    if (fpcharbuf != 1) {
-//                        int[] iScore = {0, 0};
-//                        nRet = a6.ZAZMatch(DEV_ADDR, iScore);
-//                        if (nRet == a6.PS_OK) {
-//                            temp = getResources().getString(R.string.matchsuccess_str) + iScore[0];
-//                            mtvMessage.setText(temp);
-//                        } else {
-//                            temp = getResources().getString(R.string.matchfail_str) + iScore[0];
-//                            mtvMessage.setText(temp);
-//                        }
-//                        return;
-//                    }
-//
-//                } else {
-//
-//                }
-//
-//            } else if (nRet == a6.PS_NO_FINGER) {
-//            } else if (nRet == a6.PS_GET_IMG_ERR) {
-//                return;
-//            } else if (nRet == -2) {
-//            } else {
-//                return;
-//            }
-//        }
-//    };
 
     @Override
-    public void getImageQuality() {
+    public void comparisonFinger() {
+        removeCallbacks();
+        fpcharbuf = 1;
+        handler.postDelayed(ComparisonTasks, 0);
+    }
 
+    private Runnable ComparisonTasks = new Runnable() {
+        // 运行该服务执行此函数
+        public void run() {
+            int nRet = 0;
+            int[] id_iscore = new int[1];
+            nRet = a6.ZAZGetImage(DEV_ADDR);
+
+            if (nRet == 0) {
+                nRet = a6.ZAZGenChar(DEV_ADDR, fpcharbuf);// != PS_OK) {
+                if (nRet == a6.PS_OK) {
+                    nRet = a6.ZAZHighSpeedSearch(DEV_ADDR, 1, 0, 1000, id_iscore);
+                    if (nRet == a6.PS_OK) {
+                        int[] iScore = {0, 0};
+                        nRet = a6.ZAZMatch(DEV_ADDR, iScore);
+                        if (nRet == a6.PS_OK) {
+                            Log.i(TAG, "ID:" + id_iscore[0]);
+                            handler.sendMessage(handler.obtainMessage(6, +iScore[0]));
+                        } else {
+                            handler.sendMessage(handler.obtainMessage(6, iScore[0]));
+                        }
+                    } else {
+                        handler.sendMessage(handler.obtainMessage(0, mContext.getString(R.string.search_fail)));
+                    }
+                } else {
+                    handler.sendMessage(handler.obtainMessage(0, mContext.getString(R.string.template_bad)));
+                    handler.postDelayed(ComparisonTasks, 1000);
+
+                }
+
+            } else if (nRet == a6.PS_NO_FINGER) {
+                handler.sendMessage(handler.obtainMessage(0, mContext.getString(R.string.on_reader_nofinger)));
+                handler.postDelayed(ComparisonTasks, 100);
+            } else if (nRet == a6.PS_GET_IMG_ERR) {
+                handler.sendMessage(handler.obtainMessage(0, mContext.getString(R.string.get_image_fail)));
+                handler.postDelayed(ComparisonTasks, 100);
+                return;
+            } else if (nRet == -2) {
+                handler.sendMessage(handler.obtainMessage(0, mContext.getString(R.string.receive_erro)));
+                handler.postDelayed(ComparisonTasks, 100);
+                return;
+            } else {
+                handler.sendMessage(handler.obtainMessage(0, mContext.getString(R.string.communication_erro)));
+                removeCallbacks();
+                return;
+            }
+        }
+    };
+
+
+    @Override
+    public int getImageQuality() {
+        return 0;
     }
 
     @Override
     public boolean clearFinger() {
         int Rnet = a6.ZAZEmpty(DEV_ADDR);
+        iPageID = 0;
         return true;
 
     }
 
     @Override
-    public void unObject() {
+    public void searchFinger() {
+        removeCallbacks();
+        fpcharbuf=1;
+        handler.postDelayed(searchTasks, 0);
+    }
 
+    private Runnable searchTasks = new Runnable() {
+        public void run()// 运行该服务执行此函数
+        {
+
+            int[] id_iscore = new int[1];
+            int nRet = a6.ZAZGetImage(DEV_ADDR);
+            if (nRet == 0) {
+                nRet = a6.ZAZGenChar(DEV_ADDR, fpcharbuf);// != PS_OK) {
+                if (nRet == a6.PS_OK) {
+                    nRet = a6.ZAZHighSpeedSearch(DEV_ADDR, 1, 0, 1000, id_iscore);
+                    if (nRet == a6.PS_OK) {
+                        handler.sendMessage(handler.obtainMessage(8, id_iscore[0]));
+                    } else {
+                        handler.sendMessage(handler.obtainMessage(0, mContext.getString(R.string.search_failed)));
+                    }
+
+                } else {
+                    handler.sendMessage(handler.obtainMessage(0, mContext.getString(R.string.template_bad)));
+                    handler.postDelayed(searchTasks, 800);
+
+                }
+
+            } else if (nRet == a6.PS_NO_FINGER) {
+                handler.postDelayed(searchTasks, 100);
+            } else if (nRet == a6.PS_GET_IMG_ERR) {
+                handler.sendMessage(handler.obtainMessage(0, mContext.getString(R.string.get_image_fail)));
+                handler.postDelayed(searchTasks, 100);
+                return;
+            } else if (nRet == -2) {
+                handler.sendMessage(handler.obtainMessage(0, mContext.getString(R.string.receive_erro)));
+                removeCallbacks();
+                return;
+            } else {
+                handler.sendMessage(handler.obtainMessage(0, mContext.getString(R.string.communication_erro)));
+                removeCallbacks();
+                return;
+            }
+
+        }
+    };
+
+    @Override
+    public void unObject() {
+        removeCallbacks();
     }
 }

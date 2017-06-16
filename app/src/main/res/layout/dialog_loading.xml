@@ -9,7 +9,7 @@
     <LinearLayout
         android:layout_width="150dp"
         android:layout_height="110dp"
-        android:background="@color/colorAccent"
+        android:background="#6f93e2"
         android:gravity="center"
         android:orientation="vertical"
         android:paddingBottom="10dp"

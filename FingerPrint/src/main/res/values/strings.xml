@@ -1,15 +1,35 @@
 <resources>
-    <string name="app_name">My Library</string>
-    <string name="hello">PoliceFp SDK</string>
-    <string name="TEXT_OPEN_DEVICE">OpenDevice</string>
-    <string name="TEXT_CLOSE_DEVICE">CloseDevice</string>
-    <string name="TEXT_GET_IMAGE">GetImage</string>
-    <string name="TEXT_GET_QUALITY">GetImageQuality</string>
-    <string name="TEXT_CREATE_TEMP">CreateTemplate</string>
-    <string name="TEXT_MATCH_TEMP">CompareTemplates</string>
-    <string name="TEXT_CHAR">Template</string>
-    <string name="TEXT_IMAGE">Image</string>
-    <string name="TEXT_VIDEO">Video</string>
-    <string name="FIRST_TEMPLATE">Template1</string>
-    <string name="SECOND_TEMPLATE">Template2</string>
+    <string name="app_name">FINGER</string>
+
+    <string name="init_fingerReader">The initial reader failed</string>
+
+    <string name="get_image_fail">Get image failed</string>
+    <string name="get_image_success">Get image success</string>
+
+    <string name="enrollment_success">Enrollment success</string>
+    <string name="enrollment_fail">Enrollment failed</string>
+
+    <string name="template_success">Create a fingerprint feature successfully</string>
+    <string name="template_fail">Failed to create fingerprint feature</string>
+
+    <string name="on_reader_nofinger">There is no finger on the sensor</string>
+    <string name="communication_erro">Communication error</string>
+    <string name="receive_erro">The received packet failed</string>
+    <string name="template_bad">Feature bad re-entry</string>
+    <string name="RegModulefail_str">Synthetic template failed</string>
+    <string name="get_image_again">Get the fingerprint successfully and get it again</string>
+    <string name="search_fail">Search failed, please register fingerprint!</string>
+    <string name="search_failed">Search failed!</string>
+
+
+    <string name="quality_bad">Poor quality</string>
+
+    <string name="ComparrisonFinger_failed">If the comparison fails, create the feature again</string>
+
+
+
+
+    <string name="same_finger">Continue to place the same finger on the reader</string>
+
 </resources>
+

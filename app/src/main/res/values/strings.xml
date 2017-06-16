@@ -1,3 +1,30 @@
 <resources>
     <string name="app_name">ZhiWen</string>
+    <string name="open_reader">Please open the fingerprint</string>
+    <string name="search_finger">Search  fingerprint template</string>
+    <string name="init_finger">Initial ...</string>
+    <string name="init_finger_failed">Initial failed</string>
+    <string name="comparison_finger">Match score:</string>
+
+    <string name="opne_success">Open successfully</string>
+    <string name="opne_fail">Open failed</string>
+
+    <string name="close_success">Closed successfully</string>
+    <string name="close_fail">Close failed</string>
+
+    <string name="get_image_fail">Get image failed</string>
+    <string name="get_image_success">Get image success</string>
+
+    <string name="btn_open">OPEN</string>
+    <string name="btn_close">CLOSE</string>
+    <string name="btn_get_image">IMAGE</string>
+    <string name="btn_quality">QUALITY</string>
+    <string name="btn_compare">COMPARE</string>
+    <string name="btn_template">TEMPLATE</string>
+    <string name="btn_enroll">ENROLL</string>
+    <string name="btn_search">SEARCH</string>
+
+    <string name="any_finger">Place any finger on the reader</string>
+    <string name="enroll_id">Enrill ID：</string>
+    <string name="search_id">Search ID：</string>
 </resources>

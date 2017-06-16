@@ -17,13 +17,13 @@ import java.io.DataOutputStream;
 import java.io.File;
 import java.util.HashMap;
 
-import static android.serialport.SerialPort.TAG;
 
 /**
  * Created by suntianwei on 2017/3/1.
  */
 
 public class OpenDevice {
+    String TAG="opendevice";
     private int isusbfinshed = 0;
     Context mContext;
     private UsbManager mDevManager = null;

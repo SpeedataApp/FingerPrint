@@ -25,7 +25,7 @@ public class CreateDialog {
         tipTextView.setText(msg);// 设置加载信息
 
         Dialog loadingDialog = new Dialog(context, R.style.MyDialogStyle);// 创建自定义样式dialog
-        loadingDialog.setCancelable(false); // 是否可以按“返回键”消失
+        loadingDialog.setCancelable(true); // 是否可以按“返回键”消失
         loadingDialog.setCanceledOnTouchOutside(false); // 点击加载框以外的区域
         loadingDialog.setContentView(layout, new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT,
