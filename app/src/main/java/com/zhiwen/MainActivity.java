@@ -14,7 +14,6 @@ import android.os.Message;
 import android.os.SystemClock;
 import android.serialport.DeviceControl;
 import android.support.v7.app.AppCompatActivity;
-import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
@@ -231,30 +230,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                         } catch (UareUException e) {
                             e.printStackTrace();
                         }
-//                        try {
-//                            ByteArrayInputStream _byteArrInputStream = new ByteArrayInputStream(data);
-//                            ObjectInputStream _objectInputStream = new ObjectInputStream(_byteArrInputStream);
-//                            jieguo = (Fmd) _objectInputStream.readObject();
-//                        } catch (IOException e) {
-//                            e.printStackTrace();
-//                        } catch (ClassNotFoundException e) {
-//                            e.printStackTrace();
-//                        }
-//                        for (int i = 0; i < data.length; i++) {
 //
-//                            Log.i(TAG, "byte:" + data[i]);
-//                        }
-                        fmdDstas fmDstas = new fmdDstas();
-//                        fmDstas.setFmd(fmd1);
-                        fmDstas.setFmdByte(fmd1.getData());
-                        ObjectAndByte objectAndByte = new ObjectAndByte();
-                        byte ddd[] = objectAndByte.toByteArray(fmDstas);
-                        Log.i(TAG, "handleMessage: " + new String(ddd));
-                        Log.i(TAG, "handleMessage: %%%%%%%%%%%%%%%%%%%%%%%%%");
-
-                        fmdDstas fmdbytes = (fmdDstas) objectAndByte.toObject(ddd);
-//                        byte[] fmdbytes = fmdbytes.getFmdByte();
-//                        jieguo = fmdbytes.getFmd();
                         Toast.makeText(MainActivity.this, "fmd1", Toast.LENGTH_SHORT).show();
                     } else {
                         template = true;

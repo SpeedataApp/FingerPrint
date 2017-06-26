@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="init_fingerReader">初始reader失败</string>
+
+    <string name="get_image_fail">获取图像失败</string>
+    <string name="get_image_success">获取图像成功</string>
+
+    <string name="enrollment_success">注册指纹成功</string>
+    <string name="enrollment_fail">注册指纹失败</string>
+
+    <string name="template_success">创建指纹特征成功</string>
+    <string name="template_fail">创建指纹特征失败</string>
+    <string name="template_fail_again">创建特征失败,请重试</string>
+    <string name="template">请创建模板</string>
+
+    <string name="on_reader_nofinger">传感器上没有手指</string>
+    <string name="communication_erro">通讯异常</string>
+    <string name="receive_erro">接收数据包失败</string>
+    <string name="template_bad">特征太差重新录入</string>
+    <string name="RegModulefail_str">合成模板失败</string>
+    <string name="get_image_again">获取指纹成功,再次获取</string>
+    <string name="search_fail">搜索失败,请先注册指纹!</string>
+    <string name="search_failed">搜索失败!</string>
+
+
+    <string name="quality_bad">质量太差</string>
+    <string name="ComparrisonFinger_failed">对比失败,请再次创建特征</string>
+
+
+    <string name="same_finger">将同一手指放在指纹模板上</string>
+    <string name="any_finger">放任何手指</string>
+
+
+</resources>
