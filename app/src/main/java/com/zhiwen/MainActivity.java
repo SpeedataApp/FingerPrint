@@ -223,7 +223,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                         template = false;
                         fmd1 = (Fmd) msg.obj;
                         byte data[] = fmd1.getData();
-//                        Importer.ImportFmd();
                         ImporterImpl importer=new ImporterImpl();
                         try {
                           jieguo=  importer.ImportFmd(data, Fmd.Format.ANSI_378_2004, Fmd.Format.ANSI_378_2004);
