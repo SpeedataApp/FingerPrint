@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">指纹</string>
+    <string name="open_reader">请打开指纹</string>
+    <string name="search_finger">搜索指纹模板</string>
+    <string name="init_finger">初始中……</string>
+    <string name="init_finger_failed">初始失败</string>
+    <string name="comparison_finger">比对分数:</string>
+
+
+    <string name="opne_success">打开成功</string>
+    <string name="opne_fail">打开失败</string>
+
+    <string name="close_success">关闭成功</string>
+    <string name="close_fail">关闭失败</string>
+
+    <string name="get_image_fail">获取图像失败</string>
+    <string name="get_image_success">获取图像成功</string>
+
+    <string name="btn_open">打开</string>
+    <string name="btn_close">关闭</string>
+    <string name="btn_get_image">图像</string>
+    <string name="btn_quality">质量</string>
+    <string name="btn_compare">对比</string>
+    <string name="btn_template">特征</string>
+    <string name="btn_enroll">注册</string>
+    <string name="btn_search">搜索</string>
+
+    <string name="any_finger">放任何手指</string>
+    <string name="enroll_id">注册成功ID：</string>
+    <string name="search_id">搜索ID：</string>
+
+</resources>
