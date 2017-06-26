@@ -63,6 +63,7 @@ public class TCS1GRealize implements IFingerPrint {
     @Override
     public void openReader() {
         openReaders();
+//        initReader();
     }
 
     @Override
@@ -80,9 +81,9 @@ public class TCS1GRealize implements IFingerPrint {
             m_reader.Close();
         } catch (Exception e) {
             Log.w(TAG, "error during reader shutdown");
-            mHandler.sendMessage(mHandler.obtainMessage(2,false));
+            mHandler.sendMessage(mHandler.obtainMessage(2, false));
         }
-        mHandler.sendMessage(mHandler.obtainMessage(2,true));
+        mHandler.sendMessage(mHandler.obtainMessage(2, true));
     }
 
     @Override
@@ -92,7 +93,7 @@ public class TCS1GRealize implements IFingerPrint {
 
     private void creatImage() {
         onBackPressed();
-        initReader();
+//        initReader();
         // loop capture on a separate thread to avoid freezing the UI
         //循环捕获在一个单独的线程来避免冻结UI
         new Thread(new Runnable() {
@@ -109,7 +110,7 @@ public class TCS1GRealize implements IFingerPrint {
                         m_bitmap = Globals.GetBitmapFromRaw(cap_result.image.getViews()[0].getImageData(), cap_result.image.getViews()[0].getWidth(), cap_result.image.getViews()[0].getHeight());
                         String m_text_conclusionString = Globals.QualityToString(cap_result);
                         if (m_text_conclusionString.length() == 0) {
-                            mHandler.sendMessage(mHandler.obtainMessage(3,m_bitmap));
+                            mHandler.sendMessage(mHandler.obtainMessage(3, m_bitmap));
 
                         } else {
                             mHandler.sendMessage(mHandler.obtainMessage(0, m_text_conclusionString));
@@ -128,7 +129,7 @@ public class TCS1GRealize implements IFingerPrint {
     @Override
     public void enrollment() {
         onBackPressed();
-        initReader();
+//        initReader();
         new Thread(new Runnable() {
             @Override
             public void run() {
@@ -149,7 +150,7 @@ public class TCS1GRealize implements IFingerPrint {
                         } catch (Exception e) {
                             // template creation failed, reset count
                             m_current_fmds_count = 0;
-                            mHandler.handleMessage(mHandler.obtainMessage(0,"创建模板失败，重新注册"));
+                            mHandler.handleMessage(mHandler.obtainMessage(0, mContext.getString(R.string.template_fail_again)));
                             m_reset = true;
                         }
                     }
@@ -196,7 +197,7 @@ public class TCS1GRealize implements IFingerPrint {
                     m_enginError = "";
                     // save bitmap image locally
                     m_bitmap = Globals.GetBitmapFromRaw(cap_result.image.getViews()[0].getImageData(), cap_result.image.getViews()[0].getWidth(), cap_result.image.getViews()[0].getHeight());
-                    mHandler.sendMessage(mHandler.obtainMessage(3,m_bitmap));
+                    mHandler.sendMessage(mHandler.obtainMessage(3, m_bitmap));
                     Engine.PreEnrollmentFmd prefmd = new Engine.PreEnrollmentFmd();
                     prefmd.fmd = m_engine.CreateFmd(cap_result.image, Fmd.Format.ANSI_378_2004);
                     prefmd.view_index = 0;
@@ -219,10 +220,13 @@ public class TCS1GRealize implements IFingerPrint {
             if (m_enrollment_fmd != null || m_current_fmds_count == 0) {
                 if (!m_first) {
                     if (m_text_conclusionString.length() == 0) {
-                        if (m_success){
+                        if (m_success) {
                             mHandler.sendMessage(mHandler.obtainMessage(7, m_templateSize));
                             mHandler.sendMessage(mHandler.obtainMessage(5, m_enrollment_fmd));
-//                            m_reset = true;
+                            mHandler.sendMessage(mHandler.obtainMessage(0, mContext.getString(R.string.enrollment_success)));
+                            m_reset = true;
+                        } else {
+                            mHandler.sendMessage(mHandler.obtainMessage(0, mContext.getString(R.string.same_finger)));
                         }
                     }
                 }
@@ -231,7 +235,7 @@ public class TCS1GRealize implements IFingerPrint {
             } else {
                 m_first = false;
                 m_success = false;
-                mHandler.sendMessage(mHandler.obtainMessage(0, mContext.getString(R.string.same_finger)));
+//                mHandler.sendMessage(mHandler.obtainMessage(0, mContext.getString(R.string.same_finger)));
             }
             return result;
         }
@@ -250,10 +254,10 @@ public class TCS1GRealize implements IFingerPrint {
             if (fmd1 != null && fmd2 != null) {
 
                 m_score = m_engine.Compare(fmd1, 0, fmd2, 0);
-                mHandler.sendMessage(mHandler.obtainMessage(6,m_score));
+                mHandler.sendMessage(mHandler.obtainMessage(6, m_score));
             } else {
 
-                mHandler.sendMessage(mHandler.obtainMessage(0,"请创建模板"));
+                mHandler.sendMessage(mHandler.obtainMessage(0, mContext.getString(R.string.template)));
                 return;
             }
         } catch (Exception e) {
@@ -262,6 +266,10 @@ public class TCS1GRealize implements IFingerPrint {
 //            }
 //        }).start();
 
+    }
+
+    @Override
+    public void comparisonFinger(Fmd[] fmdBytes) {
     }
 
     @Override
@@ -300,7 +308,6 @@ public class TCS1GRealize implements IFingerPrint {
     @Override
     public void createTemplate() {
         onBackPressed();
-        initReader();
         new Thread(new Runnable() {
             @Override
             public void run() {
@@ -329,7 +336,7 @@ public class TCS1GRealize implements IFingerPrint {
                 } catch (Exception e) {
                     if (!m_reset) {
                         Log.w(TAG, "error during capture: " + e.toString());
-                        onBackPressed();
+//                        onBackPressed();
                     }
                 }
             }
@@ -357,7 +364,7 @@ public class TCS1GRealize implements IFingerPrint {
             m_engine = UareUGlobal.GetEngine();
         } catch (Exception e) {
             Log.w(TAG, "error during init of reader");
-            mHandler.sendMessage(mHandler.obtainMessage(0,mContext.getString(R.string.init_fingerReader)));
+            mHandler.sendMessage(mHandler.obtainMessage(0, mContext.getString(R.string.init_fingerReader)));
             return;
         }
 
@@ -400,11 +407,12 @@ public class TCS1GRealize implements IFingerPrint {
 
 
     public void CheckDevice() {
-        mHandler.sendMessage(mHandler.obtainMessage(1,true));
+        initReader();
+        mHandler.sendMessage(mHandler.obtainMessage(1, true));
     }
 
     private void displayReaderNotFound() {
-        mHandler.sendMessage(mHandler.obtainMessage(1,false));
+        mHandler.sendMessage(mHandler.obtainMessage(1, false));
     }
 
 

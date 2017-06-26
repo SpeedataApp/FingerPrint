@@ -23,6 +23,7 @@ public interface IFingerPrint  {
     public void enrollment();
 
     public void comparisonFinger(Fmd fmd1, Fmd fmd2);
+    public void comparisonFinger(Fmd[] fmdBytes);
 
     public void comparisonFinger(byte[] bytes1, byte[] bytes2);
 

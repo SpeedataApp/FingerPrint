@@ -8,6 +8,8 @@
 
     <string name="enrollment_success">Enrollment success</string>
     <string name="enrollment_fail">Enrollment failed</string>
+    <string name="template_fail_again">Enrollment failed try again</string>
+    <string name="template">Please create a template</string>
 
     <string name="template_success">Create a fingerprint feature successfully</string>
     <string name="template_fail">Failed to create fingerprint feature</string>

@@ -230,6 +230,11 @@ public class TCS1Realize implements IFingerPrint {
     }
 
     @Override
+    public void comparisonFinger(Fmd[] fmdBytes) {
+
+    }
+
+    @Override
     public void comparisonFinger(byte[] bytes1, byte[] bytes2) {
 
     }

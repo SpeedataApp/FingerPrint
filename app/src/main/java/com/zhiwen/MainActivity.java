@@ -14,6 +14,7 @@ import android.os.Message;
 import android.os.SystemClock;
 import android.serialport.DeviceControl;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
@@ -21,6 +22,8 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.digitalpersona.uareu.Fmd;
+import com.digitalpersona.uareu.UareUException;
+import com.digitalpersona.uareu.dpfj.ImporterImpl;
 import com.mylibrary.FingerManger;
 import com.mylibrary.inf.IFingerPrint;
 import com.mylibrary.ulits.FingerTypes;
@@ -47,24 +50,25 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private long start;
     Button btnClear;
     private int fingerStata = 0;
+    private Fmd jieguo = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         initGUI();
-        TextView textView= (TextView) findViewById(R.id.vesion);
-        textView.setText("版本号"+getVersion());
+        TextView textView = (TextView) findViewById(R.id.vesion);
+        textView.setText("版本号" + getVersion());
         IntentFilter intentFilter = new IntentFilter();
         intentFilter.addAction("com.hall.success");
         registerReceiver(receiver, intentFilter);
         try {
-            deviceControl = new DeviceControl(DeviceControl.PowerType.MAIN_AND_EXPAND, 63, 5, 6);
-//            deviceContro2 = new DeviceControl(DeviceControl.PowerType.MAIN, 128);
-            deviceControl.PowerOnDevice();
+            deviceControl = new DeviceControl(DeviceControl.PowerType.MAIN_AND_EXPAND, 63);
+            deviceContro2 = new DeviceControl(DeviceControl.PowerType.MAIN, 93);
+//            deviceControl.PowerOnDevice();
+//            deviceContro2.PowerOnDevice();
             showDialog();
             SystemClock.sleep(1000);
-//            deviceContro2.PowerOnDevice();
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -129,6 +133,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     public void run() {
                         if (iFingerPrint != null) {
                             mProgressDialog.cancel();
+                            iFingerPrint.openReader();
                             switch (fingerStata) {
                                 case 1:
                                     btnSearch.setVisibility(View.GONE);
@@ -191,7 +196,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     Bitmap bitmap = (Bitmap) msg.obj;
                     if (bitmap != null) {
                         fingerImage.setImageBitmap(bitmap);
-                        tvMsg.setText(getString(R.string.get_image_success));
+//                        tvMsg.setText(getString(R.string.get_image_success));
                     } else {
 
                         tvMsg.setText(getString(R.string.get_image_fail));
@@ -218,6 +223,38 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     if (template) {
                         template = false;
                         fmd1 = (Fmd) msg.obj;
+                        byte data[] = fmd1.getData();
+//                        Importer.ImportFmd();
+                        ImporterImpl importer=new ImporterImpl();
+                        try {
+                          jieguo=  importer.ImportFmd(data, Fmd.Format.ANSI_378_2004, Fmd.Format.ANSI_378_2004);
+                        } catch (UareUException e) {
+                            e.printStackTrace();
+                        }
+//                        try {
+//                            ByteArrayInputStream _byteArrInputStream = new ByteArrayInputStream(data);
+//                            ObjectInputStream _objectInputStream = new ObjectInputStream(_byteArrInputStream);
+//                            jieguo = (Fmd) _objectInputStream.readObject();
+//                        } catch (IOException e) {
+//                            e.printStackTrace();
+//                        } catch (ClassNotFoundException e) {
+//                            e.printStackTrace();
+//                        }
+//                        for (int i = 0; i < data.length; i++) {
+//
+//                            Log.i(TAG, "byte:" + data[i]);
+//                        }
+                        fmdDstas fmDstas = new fmdDstas();
+//                        fmDstas.setFmd(fmd1);
+                        fmDstas.setFmdByte(fmd1.getData());
+                        ObjectAndByte objectAndByte = new ObjectAndByte();
+                        byte ddd[] = objectAndByte.toByteArray(fmDstas);
+                        Log.i(TAG, "handleMessage: " + new String(ddd));
+                        Log.i(TAG, "handleMessage: %%%%%%%%%%%%%%%%%%%%%%%%%");
+
+                        fmdDstas fmdbytes = (fmdDstas) objectAndByte.toObject(ddd);
+//                        byte[] fmdbytes = fmdbytes.getFmdByte();
+//                        jieguo = fmdbytes.getFmd();
                         Toast.makeText(MainActivity.this, "fmd1", Toast.LENGTH_SHORT).show();
                     } else {
                         template = true;
@@ -233,10 +270,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                         DecimalFormat formatting = new DecimalFormat("##.######");
                         comparison = "Dissimilarity Score: " + String.valueOf(mScore) + ", False match rate: "
                                 + Double.valueOf(formatting.format((double) mScore / 0x7FFFFFFF)) + " (" + (mScore < (0x7FFFFFFF / 100000) ? "match" : "no match") + ")";
-                    } else if (fingerStata==1){
-                        comparison = String.format(getString(R.string.comparison_finger)+"%d", mScore);
-                    } else if (fingerStata==2) {
-                        comparison=getString(R.string.comparison_finger)+mScore;
+                    } else if (fingerStata == 1) {
+                        comparison = String.format(getString(R.string.comparison_finger) + "%d", mScore);
+                    } else if (fingerStata == 2) {
+                        comparison = getString(R.string.comparison_finger) + mScore;
                     }
                     tvMsg.setText(comparison);
                     break;
@@ -258,6 +295,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             }
         }
     };
+
     private BroadcastReceiver receiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
@@ -301,8 +339,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             tvMsg.setText(getString(R.string.any_finger));
             iFingerPrint.createTemplate();
         } else if (view == btnCompare) {
-            iFingerPrint.comparisonFinger(template1, template2);
-            iFingerPrint.comparisonFinger(fmd1, fmd2);
+                iFingerPrint.comparisonFinger(template1, template2);
+            iFingerPrint.comparisonFinger(jieguo, fmd2);
             iFingerPrint.comparisonFinger();
         } else if (view == btnEnroll) {
             tvMsg.setText(getString(R.string.any_finger));
@@ -310,7 +348,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         } else if (view == btnSearch) {
             tvMsg.setText(getString(R.string.any_finger));
             iFingerPrint.searchFinger();
-        } else if (view==btnClear) {
+        } else if (view == btnClear) {
             iFingerPrint.clearFinger();
         }
 
@@ -344,14 +382,15 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             iFingerPrint = null;
         }
         unregisterReceiver(receiver);
-        try {
-            deviceControl.PowerOffDevice();
-//            deviceContro2.PowerOffDevice();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+//        try {
+//            deviceControl.PowerOffDevice();
+////            deviceContro2.PowerOffDevice();
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//        }
 
     }
+
     /**
      * 获取当前应用程序的版本号
      */
