@@ -62,10 +62,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         intentFilter.addAction("com.hall.success");
         registerReceiver(receiver, intentFilter);
         try {
-            deviceControl = new DeviceControl(DeviceControl.PowerType.MAIN_AND_EXPAND, 63);
-            deviceContro2 = new DeviceControl(DeviceControl.PowerType.MAIN, 93);
-//            deviceControl.PowerOnDevice();
-//            deviceContro2.PowerOnDevice();
+            deviceControl = new DeviceControl(DeviceControl.PowerType.MAIN, 63);
+            deviceContro2 = new DeviceControl(DeviceControl.PowerType.MAIN, 128);
+            deviceControl.PowerOnDevice();
+            deviceContro2.PowerOnDevice();
             showDialog();
             SystemClock.sleep(1000);
         } catch (IOException e) {
@@ -132,7 +132,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     public void run() {
                         if (iFingerPrint != null) {
                             mProgressDialog.cancel();
-                            iFingerPrint.openReader();
                             switch (fingerStata) {
                                 case 1:
                                     btnSearch.setVisibility(View.GONE);
@@ -222,9 +221,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     if (template) {
                         template = false;
                         fmd1 = (Fmd) msg.obj;
-                        byte data[] = fmd1.getData();
+                        byte data[] = fmd1.getData();//获取指纹特征Fmd的byte数组
                         ImporterImpl importer=new ImporterImpl();
                         try {
+                            //将byte转回特征fmd，进行比对
                           jieguo=  importer.ImportFmd(data, Fmd.Format.ANSI_378_2004, Fmd.Format.ANSI_378_2004);
                         } catch (UareUException e) {
                             e.printStackTrace();
@@ -357,12 +357,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             iFingerPrint = null;
         }
         unregisterReceiver(receiver);
-//        try {
-//            deviceControl.PowerOffDevice();
-////            deviceContro2.PowerOffDevice();
-//        } catch (IOException e) {
-//            e.printStackTrace();
-//        }
+        try {
+            deviceControl.PowerOffDevice();
+            deviceContro2.PowerOffDevice();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
 
     }
 

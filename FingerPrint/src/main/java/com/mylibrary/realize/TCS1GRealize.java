@@ -63,7 +63,6 @@ public class TCS1GRealize implements IFingerPrint {
     @Override
     public void openReader() {
         openReaders();
-//        initReader();
     }
 
     @Override
@@ -93,7 +92,7 @@ public class TCS1GRealize implements IFingerPrint {
 
     private void creatImage() {
         onBackPressed();
-//        initReader();
+        initReader();
         // loop capture on a separate thread to avoid freezing the UI
         //循环捕获在一个单独的线程来避免冻结UI
         new Thread(new Runnable() {
@@ -129,7 +128,7 @@ public class TCS1GRealize implements IFingerPrint {
     @Override
     public void enrollment() {
         onBackPressed();
-//        initReader();
+        initReader();
         new Thread(new Runnable() {
             @Override
             public void run() {
@@ -270,6 +269,105 @@ public class TCS1GRealize implements IFingerPrint {
 
     @Override
     public void comparisonFinger(Fmd[] fmdBytes) {
+// loop capture on a separate thread to avoid freezing the UI
+//        new Thread(new Runnable() {
+//            @Override
+//            public void run() {
+//                m_reset = false;
+//                while (!m_reset) {
+//                    try {
+//                        cap_result = m_reader.Capture(Fid.Format.ANSI_381_2004, Globals.DefaultImageProcessing, m_DPI, -1);
+//                    } catch (Exception e) {
+//                        if (!m_reset) {
+//                            Log.w("UareUSampleJava", "error during capture: " + e.toString());
+//                            onBackPressed();
+//                        }
+//                    }
+//
+//                    // an error occurred
+//                    if (cap_result == null || cap_result.image == null) continue;
+//
+//                    try {
+//                        m_enginError = "";
+//                        // save bitmap image locally
+//                        m_bitmap = Globals.GetBitmapFromRaw(cap_result.image.getViews()[0].getImageData(), cap_result.image.getViews()[0].getWidth(), cap_result.image.getViews()[0].getHeight());
+//                            Fmd m_temp = m_engine.CreateFmd(cap_result.image, Fmd.Format.ANSI_378_2004);
+//                            Fmd[] m_fmds_temp = new Fmd[]{m_fmd1, m_fmd2, m_fmd3, m_fmd4};
+//                            results = m_engine.Identify(m_temp, 0, m_fmds_temp, 100000, 2);
+//
+//                            if (results.length != 0) {
+//                                m_score = m_engine.Compare(m_fmds_temp[results[0].fmd_index], 0, m_temp, 0);
+//                            } else {
+//                                m_score = -1;
+//                            }
+//                            m_fmd1 = null;
+//                            m_fmd2 = null;
+//                            m_fmd3 = null;
+//                            m_fmd4 = null;
+//                    } catch (Exception e) {
+//                        m_enginError = e.toString();
+//                        Log.w("UareUSampleJava", "Engine error: " + e.toString());
+//                    }
+//
+//                    m_text_conclusionString = Globals.QualityToString(cap_result);
+//
+//                    if (!m_enginError.isEmpty()) {
+//                        m_text_conclusionString = "Engine: " + m_enginError;
+//                    }
+//                    if (m_fmd1 == null) {
+//                        if (!m_first) {
+//                            if (m_text_conclusionString.length() == 0) {
+//                                String conclusion = "";
+//                                if (results.length > 0) {
+//                                    switch (results[0].fmd_index) {
+//                                        case 0:
+//                                            conclusion = "Thumb matched";
+//                                            break;
+//                                        case 1:
+//                                            conclusion = "Index finger matched";
+//                                            break;
+//                                        case 2:
+//                                            conclusion = "Middle finger matched";
+//                                            break;
+//                                        case 3:
+//                                            conclusion = "Ring finger matched";
+//                                            break;
+//                                    }
+//                                } else {
+//                                    conclusion = "No match found";
+//                                }
+//                                m_text_conclusionString = conclusion;
+//                                if (m_score != -1) {
+//                                    DecimalFormat formatting = new DecimalFormat("##.######");
+//                                    m_text_conclusionString = m_text_conclusionString + " (Dissimilarity Score: " + String.valueOf(m_score) + ", False match rate: " + Double.valueOf(formatting.format((double) m_score / 0x7FFFFFFF)) + ")";
+//                                }
+//                            }
+//                        }
+//
+//                        m_textString = "Place your thumb on the reader";
+//                    } else if (m_fmd2 == null) {
+//                        m_first = false;
+//                        m_textString = "Place your index finger on the reader";
+//                    } else if (m_fmd3 == null) {
+//                        m_first = false;
+//                        m_textString = "Place your middle finger on the reader";
+//                    } else if (m_fmd4 == null) {
+//                        m_first = false;
+//                        m_textString = "Place your ring finger on the reader";
+//                    } else {
+//                        m_textString = "Place any finger on the reader";
+//                    }
+//
+//
+//                    runOnUiThread(new Runnable() {
+//                        @Override
+//                        public void run() {
+//                            UpdateGUI();
+//                        }
+//                    });
+//                }
+//            }
+//        }).start();
     }
 
     @Override
@@ -308,6 +406,7 @@ public class TCS1GRealize implements IFingerPrint {
     @Override
     public void createTemplate() {
         onBackPressed();
+        initReader();
         new Thread(new Runnable() {
             @Override
             public void run() {
@@ -407,7 +506,6 @@ public class TCS1GRealize implements IFingerPrint {
 
 
     public void CheckDevice() {
-        initReader();
         mHandler.sendMessage(mHandler.obtainMessage(1, true));
     }
 
