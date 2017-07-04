@@ -6,11 +6,12 @@ import android.graphics.BitmapFactory;
 import android.os.Handler;
 import android.util.Log;
 
-import com.digitalpersona.uareu.Fmd;
 import com.mylibrary.R;
 import com.mylibrary.inf.IFingerPrint;
 import com.mylibrary.ulits.OpenDevice;
 import com.za.finger.ZAandroid;
+
+import java.util.ArrayList;
 
 /**
  * Created by suntianwei on 2017/4/10.
@@ -190,7 +191,7 @@ public class TCS1Realize implements IFingerPrint {
 
                                 int[] iTempletLength = new int[1];
                                 nRet = a6.ZAZUpChar(DEV_ADDR, 1, pTempletbase, iTempletLength);
-                                handler.sendMessage(handler.obtainMessage(7, iPageID));
+                                handler.sendMessage(handler.obtainMessage(6, iPageID));
                                 iPageID++;
                             } else {
                             }
@@ -225,12 +226,7 @@ public class TCS1Realize implements IFingerPrint {
     };
 
     @Override
-    public void comparisonFinger(Fmd fmd1, Fmd fmd2) {
-
-    }
-
-    @Override
-    public void comparisonFinger(Fmd[] fmdBytes) {
+    public void comparisonFinger(byte[] bytes, ArrayList<byte[]> array) {
 
     }
 
@@ -262,9 +258,9 @@ public class TCS1Realize implements IFingerPrint {
                         nRet = a6.ZAZMatch(DEV_ADDR, iScore);
                         if (nRet == a6.PS_OK) {
                             Log.i(TAG, "ID:" + id_iscore[0]);
-                            handler.sendMessage(handler.obtainMessage(6, +iScore[0]));
+                            handler.sendMessage(handler.obtainMessage(5, +iScore[0]));
                         } else {
-                            handler.sendMessage(handler.obtainMessage(6, iScore[0]));
+                            handler.sendMessage(handler.obtainMessage(5, iScore[0]));
                         }
                     } else {
                         handler.sendMessage(handler.obtainMessage(0, mContext.getString(R.string.search_fail)));
@@ -326,7 +322,7 @@ public class TCS1Realize implements IFingerPrint {
                 if (nRet == a6.PS_OK) {
                     nRet = a6.ZAZHighSpeedSearch(DEV_ADDR, 1, 0, 1000, id_iscore);
                     if (nRet == a6.PS_OK) {
-                        handler.sendMessage(handler.obtainMessage(8, id_iscore[0]));
+                        handler.sendMessage(handler.obtainMessage(7, id_iscore[0]));
                     } else {
                         handler.sendMessage(handler.obtainMessage(0, mContext.getString(R.string.search_failed)));
                     }
@@ -360,4 +356,5 @@ public class TCS1Realize implements IFingerPrint {
     public void unObject() {
         removeCallbacks();
     }
+
 }

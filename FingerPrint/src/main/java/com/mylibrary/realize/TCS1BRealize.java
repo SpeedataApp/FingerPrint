@@ -8,9 +8,10 @@ import android.os.Handler;
 import android.util.Log;
 
 import com.IDWORLD.LAPI;
-import com.digitalpersona.uareu.Fmd;
 import com.mylibrary.R;
 import com.mylibrary.inf.IFingerPrint;
+
+import java.util.ArrayList;
 
 /**
  * Created by suntianwei on 2017/4/6.
@@ -134,13 +135,9 @@ public class TCS1BRealize implements IFingerPrint {
 
     }
 
-    @Override
-    public void comparisonFinger(Fmd fmd1, Fmd fmd2) {
-
-    }
 
     @Override
-    public void comparisonFinger(Fmd[] fmdBytes) {
+    public void comparisonFinger(byte[] bytes, ArrayList<byte[]> array) {
 
     }
 
@@ -155,7 +152,7 @@ public class TCS1BRealize implements IFingerPrint {
         if (bytes1 != null && bytes2 != null) {
             score = mLapi.CompareTemplates(m_hDevice, bytes1, bytes2);//返回指纹模板对比分数
             Log.i(TAG, "comparisonFinger: " + score);
-            handler.sendMessage(handler.obtainMessage(6, score));
+            handler.sendMessage(handler.obtainMessage(5, score));
         } else {
             msg = "ComparrisonFinger failed 请获取特征!";
             Log.i(TAG, "comparisonFinger: " + msg);
@@ -186,5 +183,6 @@ public class TCS1BRealize implements IFingerPrint {
     @Override
     public void unObject() {
     }
+
 
 }

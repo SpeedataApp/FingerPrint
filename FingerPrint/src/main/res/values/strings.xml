@@ -9,7 +9,7 @@
     <string name="enrollment_success">Enrollment success</string>
     <string name="enrollment_fail">Enrollment failed</string>
     <string name="template_fail_again">Enrollment failed try again</string>
-    <string name="template">Please create a template</string>
+    <string name="template">Please create template</string>
 
     <string name="template_success">Create a fingerprint feature successfully</string>
     <string name="template_fail">Failed to create fingerprint feature</string>
@@ -29,9 +29,7 @@
     <string name="ComparrisonFinger_failed">If the comparison fails, create the feature again</string>
 
 
-
-
     <string name="same_finger">Continue to place the same finger on the reader</string>
-
+    <string name="erro_captrue">Error during capture image</string>
 </resources>
 

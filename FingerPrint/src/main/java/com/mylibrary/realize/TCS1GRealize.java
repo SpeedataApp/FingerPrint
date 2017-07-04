@@ -19,14 +19,17 @@ import com.digitalpersona.uareu.Reader;
 import com.digitalpersona.uareu.ReaderCollection;
 import com.digitalpersona.uareu.UareUException;
 import com.digitalpersona.uareu.UareUGlobal;
+import com.digitalpersona.uareu.dpfj.ImporterImpl;
 import com.digitalpersona.uareu.dpfpddusbhost.DPFPDDUsbException;
 import com.digitalpersona.uareu.dpfpddusbhost.DPFPDDUsbHost;
 import com.mylibrary.R;
 import com.mylibrary.inf.IFingerPrint;
 import com.mylibrary.ulits.Globals;
 
+import java.util.ArrayList;
+
 /**
- * Created by suntianwei on 2017/4/6.
+ * Created by suntianwei on 2017/4/5.
  */
 
 public class TCS1GRealize implements IFingerPrint {
@@ -44,7 +47,6 @@ public class TCS1GRealize implements IFingerPrint {
     EnrollmentCallback enrollThread = null;
     private Engine m_engine = null;
     private Fmd mFmd = null;
-    private Fmd m_enrollment_fmd = null;
     private boolean m_success = false;
     private int m_templateSize = 0;
     private int m_current_fmds_count = 0;
@@ -53,6 +55,8 @@ public class TCS1GRealize implements IFingerPrint {
     private String m_textString;
     private int m_score = -1;
     Handler mHandler;
+    private byte[] fmdbytes = null;
+    private ImporterImpl importer;
 
     public TCS1GRealize(Context context, Activity activity, Handler handler) {
         mContext = context;
@@ -87,12 +91,13 @@ public class TCS1GRealize implements IFingerPrint {
 
     @Override
     public void getImage() {
-        creatImage();
+        cancelReader();
+        initReader();
+        CaptureImages();
     }
 
-    private void creatImage() {
-        onBackPressed();
-        initReader();
+
+    private void CaptureImages() {
         // loop capture on a separate thread to avoid freezing the UI
         //循环捕获在一个单独的线程来避免冻结UI
         new Thread(new Runnable() {
@@ -118,16 +123,34 @@ public class TCS1GRealize implements IFingerPrint {
                 } catch (Exception e) {
                     if (!m_reset) {
                         Log.w(TAG, "error during capture: " + e.toString());
-                        onBackPressed();
+                        mHandler.sendMessage(mHandler.obtainMessage(0, mContext.getString(R.string.erro_captrue)));
+                        cancelReader();
                     }
                 }
             }
         }).start();
     }
 
+
+    private void cancelReader() {
+        try {
+            m_reset = true;
+            try {
+                m_reader.CancelCapture();
+            } catch (Exception e) {
+            }
+            m_reader.Close();
+
+        } catch (Exception e) {
+            Log.w("UareUSampleJava", "error during reader shutdown");
+        }
+
+    }
+
+
     @Override
     public void enrollment() {
-        onBackPressed();
+        cancelReader();
         initReader();
         new Thread(new Runnable() {
             @Override
@@ -139,11 +162,11 @@ public class TCS1GRealize implements IFingerPrint {
                     while (!m_reset) {
                         try {
                             //创建并返回一个注册的fmd
-                            m_enrollment_fmd = m_engine.CreateEnrollmentFmd(Fmd.Format.ANSI_378_2004, enrollThread);
-                            if (m_success = (m_enrollment_fmd != null)) {
+                            mFmd = m_engine.CreateEnrollmentFmd(Fmd.Format.ANSI_378_2004, enrollThread);
+                            if (m_success = (mFmd != null)) {
                                 //获取Fmd的size
                                 // 返回FMD的完整二进制数据，包括记录头和所有视图
-                                m_templateSize = m_enrollment_fmd.getData().length;
+                                fmdbytes = mFmd.getData();
                                 m_current_fmds_count = 0;    // reset count on success
                             }
                         } catch (Exception e) {
@@ -158,7 +181,6 @@ public class TCS1GRealize implements IFingerPrint {
             }
         }).start();
     }
-
 
     /*
        获取并返回fmd将添加到预注册
@@ -186,7 +208,8 @@ public class TCS1GRealize implements IFingerPrint {
                     cap_result = m_reader.Capture(Fid.Format.ANSI_381_2004, Globals.DefaultImageProcessing, m_DPI, -1);
                 } catch (Exception e) {
                     Log.w(TAG, "error during capture: " + e.toString());
-                    onBackPressed();
+                    mHandler.sendMessage(mHandler.obtainMessage(0, mContext.getString(R.string.erro_captrue)));
+                    cancelReader();
                 }
 
                 // an error occurred
@@ -216,12 +239,11 @@ public class TCS1GRealize implements IFingerPrint {
                 m_text_conclusionString = "Engine: " + m_enginError;
             }
 
-            if (m_enrollment_fmd != null || m_current_fmds_count == 0) {
+            if (mFmd != null || m_current_fmds_count == 0) {
                 if (!m_first) {
                     if (m_text_conclusionString.length() == 0) {
                         if (m_success) {
-                            mHandler.sendMessage(mHandler.obtainMessage(7, m_templateSize));
-                            mHandler.sendMessage(mHandler.obtainMessage(5, m_enrollment_fmd));
+                            mHandler.sendMessage(mHandler.obtainMessage(4, fmdbytes));
                             mHandler.sendMessage(mHandler.obtainMessage(0, mContext.getString(R.string.enrollment_success)));
                             m_reset = true;
                         } else {
@@ -230,7 +252,7 @@ public class TCS1GRealize implements IFingerPrint {
                     }
                 }
 //                m_textString = "Place any finger on the reader";
-                m_enrollment_fmd = null;
+                mFmd = null;
             } else {
                 m_first = false;
                 m_success = false;
@@ -243,135 +265,79 @@ public class TCS1GRealize implements IFingerPrint {
 
 
     @Override
-    public void comparisonFinger(final Fmd fmd1, final Fmd fmd2) {
-        onBackPressed();
-        // loop capture on a separate thread to avoid freezing the UI
-//        new Thread(new Runnable() {
-//            @Override
-//            public void run() {
-        try {
-            if (fmd1 != null && fmd2 != null) {
-
-                m_score = m_engine.Compare(fmd1, 0, fmd2, 0);
-                mHandler.sendMessage(mHandler.obtainMessage(6, m_score));
-            } else {
-
-                mHandler.sendMessage(mHandler.obtainMessage(0, mContext.getString(R.string.template)));
-                return;
+    public void comparisonFinger(byte[] bytes, ArrayList<byte[]> array) {
+        importer = new ImporterImpl();
+        Fmd fmds = null;
+        if (bytes != null) {
+            try {
+                fmds = importer.ImportFmd(bytes, Fmd.Format.ANSI_378_2004, Fmd.Format.ANSI_378_2004);
+            } catch (UareUException e) {
+                e.printStackTrace();
             }
-        } catch (Exception e) {
-            Log.w(TAG, "Engine error: " + e.toString());
+
+            if (array.size() > 0) {
+                Fmd[] fmdBytes = new Fmd[array.size()];
+                for (int i = 0; i < array.size(); i++) {
+                    //转回指纹FMD特征
+                    try {
+                        fmdBytes[i] = importer.ImportFmd(array.get(i), Fmd.Format.ANSI_378_2004, Fmd.Format.ANSI_378_2004);
+                    } catch (UareUException e) {
+                        e.printStackTrace();
+                    }
+                }
+
+                try {
+                    Engine.Candidate[] results = m_engine.Identify(fmds, 0, fmdBytes, 100000, 2);
+                    if (results.length != 0) {
+                        m_score = m_engine.Compare(fmdBytes[results[0].fmd_index], 0, fmds, 0);
+                    } else {
+                        m_score = -1;
+                    }
+                    if (results.length > 0) {
+                        mHandler.sendMessage(mHandler.obtainMessage(0, "有匹配：" + results[0].fmd_index));
+                    } else {
+                        mHandler.sendMessage(mHandler.obtainMessage(0, "无匹配："));
+
+                    }
+                    if (m_score != -1) {
+                        mHandler.sendMessage(mHandler.obtainMessage(5, m_score));
+                    }
+                } catch (UareUException e) {
+                    m_enginError = e.toString();
+                    Log.w("UareUSampleJava", "Engine error: " + e.toString());
+                }
+            }
+        } else {
+            mHandler.sendMessage(mHandler.obtainMessage(0, "请指定指纹组的大小"));
         }
-//            }
-//        }).start();
-
-    }
-
-    @Override
-    public void comparisonFinger(Fmd[] fmdBytes) {
-// loop capture on a separate thread to avoid freezing the UI
-//        new Thread(new Runnable() {
-//            @Override
-//            public void run() {
-//                m_reset = false;
-//                while (!m_reset) {
-//                    try {
-//                        cap_result = m_reader.Capture(Fid.Format.ANSI_381_2004, Globals.DefaultImageProcessing, m_DPI, -1);
-//                    } catch (Exception e) {
-//                        if (!m_reset) {
-//                            Log.w("UareUSampleJava", "error during capture: " + e.toString());
-//                            onBackPressed();
-//                        }
-//                    }
-//
-//                    // an error occurred
-//                    if (cap_result == null || cap_result.image == null) continue;
-//
-//                    try {
-//                        m_enginError = "";
-//                        // save bitmap image locally
-//                        m_bitmap = Globals.GetBitmapFromRaw(cap_result.image.getViews()[0].getImageData(), cap_result.image.getViews()[0].getWidth(), cap_result.image.getViews()[0].getHeight());
-//                            Fmd m_temp = m_engine.CreateFmd(cap_result.image, Fmd.Format.ANSI_378_2004);
-//                            Fmd[] m_fmds_temp = new Fmd[]{m_fmd1, m_fmd2, m_fmd3, m_fmd4};
-//                            results = m_engine.Identify(m_temp, 0, m_fmds_temp, 100000, 2);
-//
-//                            if (results.length != 0) {
-//                                m_score = m_engine.Compare(m_fmds_temp[results[0].fmd_index], 0, m_temp, 0);
-//                            } else {
-//                                m_score = -1;
-//                            }
-//                            m_fmd1 = null;
-//                            m_fmd2 = null;
-//                            m_fmd3 = null;
-//                            m_fmd4 = null;
-//                    } catch (Exception e) {
-//                        m_enginError = e.toString();
-//                        Log.w("UareUSampleJava", "Engine error: " + e.toString());
-//                    }
-//
-//                    m_text_conclusionString = Globals.QualityToString(cap_result);
-//
-//                    if (!m_enginError.isEmpty()) {
-//                        m_text_conclusionString = "Engine: " + m_enginError;
-//                    }
-//                    if (m_fmd1 == null) {
-//                        if (!m_first) {
-//                            if (m_text_conclusionString.length() == 0) {
-//                                String conclusion = "";
-//                                if (results.length > 0) {
-//                                    switch (results[0].fmd_index) {
-//                                        case 0:
-//                                            conclusion = "Thumb matched";
-//                                            break;
-//                                        case 1:
-//                                            conclusion = "Index finger matched";
-//                                            break;
-//                                        case 2:
-//                                            conclusion = "Middle finger matched";
-//                                            break;
-//                                        case 3:
-//                                            conclusion = "Ring finger matched";
-//                                            break;
-//                                    }
-//                                } else {
-//                                    conclusion = "No match found";
-//                                }
-//                                m_text_conclusionString = conclusion;
-//                                if (m_score != -1) {
-//                                    DecimalFormat formatting = new DecimalFormat("##.######");
-//                                    m_text_conclusionString = m_text_conclusionString + " (Dissimilarity Score: " + String.valueOf(m_score) + ", False match rate: " + Double.valueOf(formatting.format((double) m_score / 0x7FFFFFFF)) + ")";
-//                                }
-//                            }
-//                        }
-//
-//                        m_textString = "Place your thumb on the reader";
-//                    } else if (m_fmd2 == null) {
-//                        m_first = false;
-//                        m_textString = "Place your index finger on the reader";
-//                    } else if (m_fmd3 == null) {
-//                        m_first = false;
-//                        m_textString = "Place your middle finger on the reader";
-//                    } else if (m_fmd4 == null) {
-//                        m_first = false;
-//                        m_textString = "Place your ring finger on the reader";
-//                    } else {
-//                        m_textString = "Place any finger on the reader";
-//                    }
-//
-//
-//                    runOnUiThread(new Runnable() {
-//                        @Override
-//                        public void run() {
-//                            UpdateGUI();
-//                        }
-//                    });
-//                }
-//            }
-//        }).start();
     }
 
     @Override
     public void comparisonFinger(byte[] bytes1, byte[] bytes2) {
+        Fmd fmd1 = null;
+        Fmd fmd2 = null;
+        if (bytes1 != null && bytes2 != null) {
+            //转回指纹FMD特征
+            importer = new ImporterImpl();
+            try {
+                fmd1 = importer.ImportFmd(bytes1, Fmd.Format.ANSI_378_2004, Fmd.Format.ANSI_378_2004);
+                fmd2 = importer.ImportFmd(bytes2, Fmd.Format.ANSI_378_2004, Fmd.Format.ANSI_378_2004);
+            } catch (UareUException e) {
+                e.printStackTrace();
+            }
+
+            try {
+                if (fmd1 != null && fmd2 != null) {
+                    m_score = m_engine.Compare(fmd1, 0, fmd2, 0);
+                    mHandler.sendMessage(mHandler.obtainMessage(5, m_score));
+                }
+            } catch (Exception e) {
+                Log.w(TAG, "Engine error: " + e.toString());
+            }
+        } else {
+            mHandler.sendMessage(mHandler.obtainMessage(0, mContext.getString(R.string.template)));
+            return;
+        }
 
     }
 
@@ -400,12 +366,13 @@ public class TCS1GRealize implements IFingerPrint {
     public void unObject() {
         if (!deviceName.equals("")) {
             mContext.unregisterReceiver(mUsbReceiver);
+            cancelReader();
         }
     }
 
     @Override
     public void createTemplate() {
-        onBackPressed();
+        cancelReader();
         initReader();
         new Thread(new Runnable() {
             @Override
@@ -424,7 +391,9 @@ public class TCS1GRealize implements IFingerPrint {
                             mHandler.sendMessage(mHandler.obtainMessage(3, m_bitmap));
                             mFmd = m_engine.CreateFmd(cap_result.image, Fmd.Format.ANSI_378_2004);
                             if (mFmd != null) {
-                                mHandler.sendMessage(mHandler.obtainMessage(5, mFmd));
+                                //将特征fmd转为特征byte
+                                fmdbytes = mFmd.getData();
+                                mHandler.sendMessage(mHandler.obtainMessage(4, fmdbytes));
                                 m_reset = true;
                             }
                         } else {
@@ -434,26 +403,15 @@ public class TCS1GRealize implements IFingerPrint {
                     }
                 } catch (Exception e) {
                     if (!m_reset) {
+                        cancelReader();
+                        mHandler.sendMessage(mHandler.obtainMessage(0, mContext.getString(R.string.erro_captrue)));
                         Log.w(TAG, "error during capture: " + e.toString());
-//                        onBackPressed();
                     }
                 }
             }
         }).start();
     }
 
-    public void onBackPressed() {
-        try {
-            m_reset = true;
-            try {
-                m_reader.CancelCapture();
-            } catch (Exception e) {
-            }
-            m_reader.Close();
-        } catch (Exception e) {
-            Log.w(TAG, "error during reader shutdown");
-        }
-    }
 
     public void initReader() {
         try {
@@ -472,6 +430,7 @@ public class TCS1GRealize implements IFingerPrint {
     private void openReaders() {
         try {
             readers = Globals.getInstance().getReaders(mContext);
+//            deviceName = readers.get(0).GetDescription().name;
         } catch (UareUException e) {
             displayReaderNotFound();
         }
@@ -482,6 +441,17 @@ public class TCS1GRealize implements IFingerPrint {
             }
             if ((deviceName != null) && !deviceName.isEmpty()) {
                 Log.w(TAG, deviceName);
+                try {
+                    m_reader = Globals.getInstance().getReader(deviceName, mContext);
+                    m_reader.Open(Reader.Priority.EXCLUSIVE);
+                    m_DPI = Globals.GetFirstDPI(m_reader);
+                    m_engine = UareUGlobal.GetEngine();
+                    m_reader.Close();
+                } catch (UareUException e) {
+                    e.printStackTrace();
+                    Log.w(TAG, "reader.open faild");
+                    displayReaderNotFound();
+                }
                 try {
                     m_reader = Globals.getInstance().getReader(deviceName, mContext);
                     PendingIntent mPermissionIntent;

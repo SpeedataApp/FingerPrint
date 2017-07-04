@@ -14,6 +14,7 @@ import android.os.Message;
 import android.os.SystemClock;
 import android.serialport.DeviceControl;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
@@ -21,22 +22,21 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.digitalpersona.uareu.Fmd;
-import com.digitalpersona.uareu.UareUException;
-import com.digitalpersona.uareu.dpfj.ImporterImpl;
 import com.mylibrary.FingerManger;
 import com.mylibrary.inf.IFingerPrint;
 import com.mylibrary.ulits.FingerTypes;
 
 import java.io.IOException;
 import java.text.DecimalFormat;
+import java.util.ArrayList;
 
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
     Button btnOpen, btnGetImage, btnGetQuality, btnColse, btnCompare,
-            btnCreateTemplate, btnEnroll, btnSearch;
+            btnCreateTemplate, btnEnroll, btnSearch, btnCompares;
     ImageView fingerImage = null;
     TextView tvMsg;
-    private IFingerPrint iFingerPrint = null;
+    //    private IFingerPrint iFingerPrint = null;
     DeviceControl deviceControl;
     DeviceControl deviceContro2;
     Fmd fmd1 = null;
@@ -50,6 +50,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     Button btnClear;
     private int fingerStata = 0;
     private Fmd jieguo = null;
+    private IFingerPrint iFingerPrint;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -63,7 +64,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         registerReceiver(receiver, intentFilter);
         try {
             deviceControl = new DeviceControl(DeviceControl.PowerType.MAIN, 63);
-            deviceContro2 = new DeviceControl(DeviceControl.PowerType.MAIN, 128);
+            deviceContro2 = new DeviceControl(DeviceControl.PowerType.MAIN, 93);
             deviceControl.PowerOnDevice();
             deviceContro2.PowerOnDevice();
             showDialog();
@@ -71,7 +72,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         } catch (IOException e) {
             e.printStackTrace();
         }
-
+//        iFingerPrint = new TCS1GRealize(MainActivity.this, MainActivity.this, handler);
+//        iFingerPrint.openReader();
     }
 
     private void initGUI() {
@@ -93,6 +95,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         btnEnroll.setOnClickListener(this);
         btnSearch = (Button) findViewById(R.id.btn_search);
         btnSearch.setOnClickListener(this);
+        btnCompares = (Button) findViewById(R.id.btn_n);
+        btnCompares.setOnClickListener(this);
 
         btnClear = (Button) findViewById(R.id.btn_clear);
         btnClear.setOnClickListener(this);
@@ -132,14 +136,18 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     public void run() {
                         if (iFingerPrint != null) {
                             mProgressDialog.cancel();
+                            iFingerPrint.openReader();
                             switch (fingerStata) {
                                 case 1:
                                     btnSearch.setVisibility(View.GONE);
                                     btnEnroll.setVisibility(View.GONE);
                                     btnClear.setVisibility(View.GONE);
+                                    btnCompares.setVisibility(View.GONE);
+
                                     break;
                                 case 2:
                                     btnGetQuality.setVisibility(View.GONE);
+                                    btnCompares.setVisibility(View.GONE);
                                     break;
                                 case 3:
                                     btnGetQuality.setVisibility(View.GONE);
@@ -158,6 +166,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     }
 
+    int connect = 0;
+    ArrayList<byte[]> bytes = new ArrayList<>();
     Handler handler = new Handler() {
         @Override
         public void handleMessage(Message msg) {
@@ -202,43 +212,34 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
                     break;
                 case 4:
-                    if (template) {
-                        template = false;
-                        template1 = new byte[1024];
+//                    template1 = (byte[]) msg.obj;
+                    if (connect > 2) {
                         template1 = (byte[]) msg.obj;
-//                        for (int i = 0; i < LAPI.FPINFO_STD_MAX_SIZE; i++) {
-//                           msg += String.format("%02x", template1[i]);
-//                        }
+                        Log.i(TAG, "handleMessage: @@@@@@@");
                         Toast.makeText(MainActivity.this, "template1", Toast.LENGTH_SHORT).show();
                     } else {
-                        template = true;
-                        template2 = new byte[1024];
-                        template2 = (byte[]) msg.obj;
-                        Toast.makeText(MainActivity.this, "template2", Toast.LENGTH_SHORT).show();
+                        bytes.add((byte[]) msg.obj);
+                        Toast.makeText(MainActivity.this, connect++ + "", Toast.LENGTH_SHORT).show();
+                        Log.i(TAG, "handleMessage: ########");
+                        Log.i(TAG, "bytes.size()" + bytes.size());
                     }
+//                    if (template) {
+//                        template = false;
+////                        template1 = new byte[1024];
+//                        template1 = (byte[]) msg.obj;
+////                        for (int i = 0; i < LAPI.FPINFO_STD_MAX_SIZE; i++) {
+////                           msg += String.format("%02x", template1[i]);
+////                        }
+//                        Toast.makeText(MainActivity.this, "template1", Toast.LENGTH_SHORT).show();
+//                    } else {
+//                        template = true;
+////                        template2 = new byte[1024];
+//                        template2 = (byte[]) msg.obj;
+//
+//                        Toast.makeText(MainActivity.this, "template2", Toast.LENGTH_SHORT).show();
+//                    }
                     break;
                 case 5:
-                    if (template) {
-                        template = false;
-                        fmd1 = (Fmd) msg.obj;
-                        byte data[] = fmd1.getData();//获取指纹特征Fmd的byte数组
-                        ImporterImpl importer=new ImporterImpl();
-                        try {
-                            //将byte转回特征fmd，进行比对
-                          jieguo=  importer.ImportFmd(data, Fmd.Format.ANSI_378_2004, Fmd.Format.ANSI_378_2004);
-                        } catch (UareUException e) {
-                            e.printStackTrace();
-                        }
-//
-                        Toast.makeText(MainActivity.this, "fmd1", Toast.LENGTH_SHORT).show();
-                    } else {
-                        template = true;
-                        fmd2 = (Fmd) msg.obj;
-                        Toast.makeText(MainActivity.this, "fmd2", Toast.LENGTH_SHORT).show();
-                    }
-
-                    break;
-                case 6:
                     int mScore = (Integer) msg.obj;
                     String comparison = "";
                     if (fingerStata == 3) {
@@ -250,9 +251,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     } else if (fingerStata == 2) {
                         comparison = getString(R.string.comparison_finger) + mScore;
                     }
+                    DecimalFormat formatting = new DecimalFormat("##.######");
+                    comparison = "Dissimilarity Score: " + String.valueOf(mScore) + ", False match rate: "
+                            + Double.valueOf(formatting.format((double) mScore / 0x7FFFFFFF)) + " (" + (mScore < (0x7FFFFFFF / 100000) ? "match" : "no match") + ")";
                     tvMsg.setText(comparison);
                     break;
-                case 7://注册
+                case 6://注册
                     int zhuce = (Integer) msg.obj;
                     String mTextString = null;
                     if (fingerStata == 3) {
@@ -262,7 +266,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     }
                     tvMsg.setText(mTextString);
                     break;
-                case 8://搜索
+                case 7://搜索
                     tvMsg.setText(getString(R.string.search_id) + msg.obj + "");
                     break;
                 default:
@@ -294,6 +298,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         btnEnroll.setEnabled(btnState);
         btnSearch.setEnabled(btnState);
         btnClear.setEnabled(btnState);
+        btnCompares.setEnabled(btnState);
     }
 
     @Override
@@ -314,17 +319,23 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             tvMsg.setText(getString(R.string.any_finger));
             iFingerPrint.createTemplate();
         } else if (view == btnCompare) {
-                iFingerPrint.comparisonFinger(template1, template2);
-            iFingerPrint.comparisonFinger(jieguo, fmd2);
-            iFingerPrint.comparisonFinger();
-        } else if (view == btnEnroll) {
-            tvMsg.setText(getString(R.string.any_finger));
-            iFingerPrint.enrollment();
-        } else if (view == btnSearch) {
-            tvMsg.setText(getString(R.string.any_finger));
-            iFingerPrint.searchFinger();
-        } else if (view == btnClear) {
-            iFingerPrint.clearFinger();
+            Intent intent = new Intent(MainActivity.this, CompareAct.class);
+            startActivity(intent);
+//            iFingerPrint.comparisonFinger(template1, template2);
+        } else if (view == btnCompares) {
+//            iFingerPrint.comparisonFinger(template1, bytes);
+            Intent intent = new Intent(MainActivity.this, ComparesAct.class);
+            startActivity(intent);
+        } else {
+            if (view == btnEnroll) {
+                tvMsg.setText(getString(R.string.any_finger));
+                iFingerPrint.enrollment();
+            } else if (view == btnSearch) {
+                tvMsg.setText(getString(R.string.any_finger));
+                iFingerPrint.searchFinger();
+            } else if (view == btnClear) {
+                iFingerPrint.clearFinger();
+            }
         }
 
     }
